@@ -272,6 +272,22 @@ label.ck input{accent-color:var(--brand);margin:0}
 #view{position:relative;z-index:1}
 .hero h2{font-size:clamp(21px,5.2vw,28px);font-weight:700;letter-spacing:-.03em;color:var(--brand-ink);line-height:1.2;text-wrap:balance}
 .hero>p{color:var(--dim);margin:8px auto 22px;max-width:520px;font-size:15px}
+.btn.neon-btn{background:linear-gradient(135deg,#22C55E 0%,#10B981 100%)!important;color:#042410!important;font-weight:800!important;border:0!important;box-shadow:0 0 20px rgba(34,197,94,.45)!important;transition:all .2s ease!important}
+.btn.neon-btn:hover{box-shadow:0 0 32px rgba(34,197,94,.7)!important;transform:translateY(-1px)!important;filter:brightness(1.1)!important}
+.source-pills-row{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.source-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.08);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s ease;backdrop-filter:blur(10px)}
+.source-pill:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.24);box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.source-pill.yt:hover{border-color:rgba(239,68,68,.5);box-shadow:0 0 20px rgba(239,68,68,.25);color:#FCA5A5}
+.source-pill.tw:hover{border-color:rgba(168,85,247,.5);box-shadow:0 0 20px rgba(168,85,247,.25);color:#D8B4FE}
+.source-pill.kk:hover{border-color:rgba(34,197,94,.5);box-shadow:0 0 20px rgba(34,197,94,.25);color:#86EFAC}
+.source-pill.up:hover{border-color:rgba(59,130,246,.5);box-shadow:0 0 20px rgba(59,130,246,.25);color:#93C5FD}
+.source-pill .s-icon{font-size:14px}
+.dash-welcome-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:16px 20px;background:rgba(15,23,42,.6);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px)}
+.dash-welcome-bar h2{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.tile.t-live i{background:rgba(239,68,68,.15);color:#EF4444;border:1px solid rgba(239,68,68,.3)}
+.tile.t-clips i{background:rgba(99,102,241,.15);color:#818CF8;border:1px solid rgba(99,102,241,.3)}
+.tile.t-post i{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.3)}
+.tile.t-queue i{background:rgba(6,182,212,.15);color:#22D3EE;border:1px solid rgba(6,182,212,.3)}
 .composer{max-width:760px;margin:0 auto;background:rgba(15,23,42,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-2);border-radius:var(--r-lg);text-align:left;box-shadow:0 16px 48px -8px rgba(0,0,0,.6),0 0 24px rgba(99,102,241,.12);transition:all .2s ease}
 .composer:has(#url:focus){border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,.25),0 20px 56px rgba(0,0,0,.7)}
 .composer.compact{max-width:none;margin-bottom:28px;background:rgba(15,23,42,.75);border:1px solid var(--line)}
@@ -1347,8 +1363,21 @@ function go(v, tab, fromHistory) {
   $("#app").classList.remove("open");
   const view = $("#view");
   if (window._gaStop) { window._gaStop(); window._gaStop = null; }
-  $("#heroSlot").innerHTML = v === "overview" ? `<section class="hero"><div class="ga-bg" id="appAscii" aria-hidden="true"></div><h2>What do you want to clip today?</h2>
-      <p>Paste a link or drop in videos. You get captioned shorts back.</p><div id="add"></div></section>` : "";
+  $("#heroSlot").innerHTML = v === "overview" ? `<section class="hero"><div class="ga-bg" id="appAscii" aria-hidden="true"></div>
+      <div style="margin-bottom:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+        <span class="pill live"><span class="dot"></span>Studio v2.0 Active</span>
+        <span class="pill" style="border-color:rgba(99,102,241,.3);color:#A5B4FC;background:rgba(99,102,241,.12)">⚡ Whisper Multilingual Ready</span>
+        <span class="pill" style="border-color:rgba(34,197,94,.3);color:#4ADE80;background:rgba(34,197,94,.1)">🎮 Dual Facecam Split</span>
+      </div>
+      <h2 style="font-size:clamp(22px,4vw,32px);font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#FFFFFF 30%,#A5B4FC 70%,#22D3EE 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Turn Long Videos into Viral Shorts</h2>
+      <p style="color:var(--dim);margin:6px auto 20px;font-size:15px;max-width:540px">Paste a YouTube, Twitch or Kick link below or drop in video files to extract viral moments automatically.</p>
+      <div class="source-pills-row">
+        <button type="button" class="source-pill yt" onclick="focusSource('youtube')"><span class="s-icon">▶</span>YouTube</button>
+        <button type="button" class="source-pill tw" onclick="focusSource('twitch')"><span class="s-icon">👾</span>Twitch</button>
+        <button type="button" class="source-pill kk" onclick="focusSource('kick')"><span class="s-icon">🟩</span>Kick</button>
+        <button type="button" class="source-pill up" onclick="document.querySelector('[data-act=pickfile]')?.click()"><span class="s-icon">📁</span>Upload File</button>
+      </div>
+      <div id="add"></div></section>` : "";
   if (v === "overview") view.innerHTML = `<div id="ov"></div>`;
   else if (v === "library") view.innerHTML = `<div id="add"></div><div id="jobs"></div>`;
   else if (v === "settings") view.innerHTML = `<div id="sform"></div>`;
@@ -1373,6 +1402,13 @@ function setTab(t) {
 }
 
 /* ============================================================ add bar */
+function focusSource(p) {
+  const inp = $("#url"); if (!inp) return;
+  inp.focus();
+  if (p === "youtube") inp.placeholder = "https://youtube.com/watch?v=...";
+  else if (p === "twitch") inp.placeholder = "https://twitch.tv/videos/...";
+  else if (p === "kick") inp.placeholder = "https://kick.com/.../videos/...";
+}
 function drawAdd(variant) {
   const c = creator();
   $("#add").innerHTML = `<form class="composer ${variant === "hero" ? "big" : "compact"}" id="addform">
@@ -1383,7 +1419,7 @@ function drawAdd(variant) {
       ${c ? "" : picker("o_creator", "File under creator", [{v:"", label:"No creator", icon:"user"}, ...S.creators.map(x => ({v:x.id, label:x.name, img:x.profile?.pic && x.profile.channel === x.channel ? avatarUrl(x) : ""}))], "")}
       <button type="button" class="chip" data-act="toggleopts" aria-expanded="false">${ic("sliders")}Options</button>
       <span class="grow"></span><span class="hint">or drop a video file here</span>
-      <button class="btn primary" id="goBtn">${ic("scissors")}Make clips</button>
+      <button class="btn neon-btn" id="goBtn">${ic("scissors")}Make clips 🚀</button>
     </div>
     <div class="composer-opts" inert><div class="og">
       <div class="ob wide"><div class="ot">Clips</div><div class="nsteps">
@@ -1946,11 +1982,18 @@ function drawOverview() {
   const state = r => r.state === "recording" ? `<span class="pill live"><span class="dot"></span>Recording</span>` : r.state === "waiting" ? `<span class="pill warn">Waiting for live</span>` : `<span class="pill">Idle</span>`;
   const pst = p => p.status === "posted" ? `<span class="pill ok">Posted</span>` : p.status === "failed" ? `<span class="pill bad">Failed</span>` : p.status === "posting" ? `<span class="pill warn">Posting now</span>` : `<span class="pill warn">${clock(p.due_at)}</span>`;
   const steps = nextSteps(o);
-  put(box, `<div class="tiles">
-      <div class="tile"><i>${ic("radio")}</i><b>${o.recording}</b><span>Recording now</span></div>
-      <div class="tile"><i>${ic("scissors")}</i><b>${sum("clips_today")}</b><span>Clips today</span></div>
-      <div class="tile"><i>${ic("send")}</i><b>${sum("posted_today")}</b><span>Posted today</span></div>
-      <div class="tile"><i>${ic(sum("failed") ? "warn" : "clock")}</i><b>${sum("queued")}</b><span>Waiting to post${sum("failed") ? ` · <span style="color:var(--bad)">${sum("failed")} failed</span>` : ""}</span></div></div>
+  const h = new Date().getHours();
+  const greet = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+  const user = S.status?.user?.name || "Creator";
+  put(box, `<div class="dash-welcome-bar">
+      <div><h2>Good ${greet}, ${esc(user)} 👋</h2><p class="sub" style="margin-top:2px;font-size:13px;color:var(--dim)">Here is your live stream clipping performance &amp; channel analytics.</p></div>
+      <button class="btn neon-btn sm" onclick="$('#url')?.focus();$('#url')?.scrollIntoView({behavior:'smooth'})">+ New Project</button>
+    </div>
+    <div class="tiles">
+      <div class="tile t-live"><i>${ic("radio")}</i><b>${o.recording}</b><span>Live recording</span></div>
+      <div class="tile t-clips"><i>${ic("scissors")}</i><b>${sum("clips_today")}</b><span>Clips cut today</span></div>
+      <div class="tile t-post"><i>${ic("send")}</i><b>${sum("posted_today")}</b><span>Posted to socials</span></div>
+      <div class="tile t-queue"><i>${ic(sum("failed") ? "warn" : "clock")}</i><b>${sum("queued")}</b><span>In post queue${sum("failed") ? ` · <span style="color:var(--bad)">${sum("failed")} failed</span>` : ""}</span></div></div>
     <div class="home-grid">
       <div class="card"><div class="card-head"><div><h2>Activity</h2><p class="sub">Last 14 days</p></div>
           <div class="kpis"><div class="kpi"><b>${d14("clips")}</b><span>Clips made</span></div><div class="kpi"><b>${d14("posted")}</b><span>Posted</span></div>

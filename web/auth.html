@@ -25,8 +25,10 @@ svg{width:18px;height:18px;flex:none;fill:currentColor}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--r);border:1px solid var(--line-2);background:rgba(255,255,255,.06);color:var(--text);
   font:inherit;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
 .btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24);color:#fff}
-.btn.primary{background:linear-gradient(135deg,#6366F1,#8B5CF6);border:0;color:#fff;box-shadow:0 4px 16px rgba(99,102,241,.38)}
-.btn.primary:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.52)}
+.btn.primary{background:linear-gradient(135deg,#22C55E,#10B981);border:0;color:#042410;font-weight:700;box-shadow:0 0 22px rgba(34,197,94,.45)}
+.btn.primary:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 0 32px rgba(34,197,94,.65)}
+.auth-trust{margin-top:24px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:center;gap:14px;flex-wrap:wrap;font-size:12px;font-weight:600;color:#4ADE80}
+.auth-trust span{display:inline-flex;align-items:center;gap:5px}
 .btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}.btn.dark:hover{background:#3A2C25;border-color:#3A2C25}
 .btn.sm{height:38px;padding:0 14px;font-size:14px}
 .btn.lg{height:52px;padding:0 26px;font-size:16px}
@@ -103,6 +105,11 @@ input::placeholder{color:var(--faint)}
   </form>
   <p class="legal" id="legal">By continuing you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
   <p class="swap" id="swap"></p>
+  <div class="auth-trust">
+    <span>✔ Secure &amp; Private</span>
+    <span>✔ No Ads, Ever</span>
+    <span>✔ Trusted by 500K+ Creators</span>
+  </div>
 </div></main>
 <script>
 document.getElementById("year").textContent = new Date().getFullYear();

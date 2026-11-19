@@ -1,26 +1,33 @@
-<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="280" height="60" viewBox="0 0 280 60" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="clipcut-grad" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="cc-p1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#8B5CF6"/>
-      <stop offset="50%" stop-color="#6366F1"/>
-      <stop offset="100%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
     </linearGradient>
-    <linearGradient id="accent-grad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#A78BFA"/>
-      <stop offset="100%" stop-color="#22D3EE"/>
+    <linearGradient id="cc-p2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="cc-p3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="brand-text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#A5B4FC"/>
     </linearGradient>
   </defs>
 
-  <!-- Logo Mark Icon -->
-  <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#clipcut-grad)"/>
-  
-  <!-- Stylized Cut Symbol inside Icon -->
-  <path d="M38 30L62 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
-  <path d="M62 30L38 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10"/>
-  <circle cx="50" cy="50" r="7" fill="#0B0F19"/>
-  <circle cx="50" cy="50" r="4" fill="#22D3EE"/>
+  <!-- Cyber Faceted Play Icon -->
+  <g transform="translate(8, 7)">
+    <path d="M4 4 L22 23 L4 42 Z" fill="url(#cc-p1)"/>
+    <path d="M22 23 L42 23 L18 8 Z" fill="url(#cc-p2)"/>
+    <path d="M22 23 L42 23 L22 38 L4 42 Z" fill="url(#cc-p3)" opacity="0.95"/>
+    <circle cx="22" cy="23" r="2.5" fill="#FFFFFF"/>
+  </g>
 
-  <!-- Brand Typography -->
-  <text x="110" y="58" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="800" font-size="42" fill="#FFFFFF" letter-spacing="-1">Clip<tspan fill="url(#accent-grad)">Cut</tspan></text>
-  <text x="112" y="78" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="12" fill="#94A3B8" letter-spacing="3.5">STUDIO AI</text>
+  <!-- Typography -->
+  <text x="62" y="36" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" fill="url(#brand-text)" letter-spacing="-0.5">Clip<tspan fill="#22D3EE">Cut</tspan></text>
+  <text x="64" y="49" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing="2.8">AI SHORTS STUDIO</text>
 </svg>

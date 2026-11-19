@@ -1,26 +1,24 @@
-<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="280" height="60" viewBox="0 0 280 60" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="clipcut-grad-light" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="50%" stop-color="#4F46E5"/>
-      <stop offset="100%" stop-color="#0891B2"/>
+    <linearGradient id="cc-p1l" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
     </linearGradient>
-    <linearGradient id="accent-grad-light" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#06B6D4"/>
+    <linearGradient id="cc-p2l" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="cc-p3l" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
     </linearGradient>
   </defs>
-
-  <!-- Logo Mark Icon -->
-  <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#clipcut-grad-light)"/>
-  
-  <!-- Stylized Cut Symbol inside Icon -->
-  <path d="M38 30L62 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
-  <path d="M62 30L38 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10"/>
-  <circle cx="50" cy="50" r="7" fill="#0B0F19"/>
-  <circle cx="50" cy="50" r="4" fill="#22D3EE"/>
-
-  <!-- Brand Typography -->
-  <text x="110" y="58" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="800" font-size="42" fill="#0F172A" letter-spacing="-1">Clip<tspan fill="url(#accent-grad-light)">Cut</tspan></text>
-  <text x="112" y="78" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="12" fill="#64748B" letter-spacing="3.5">STUDIO AI</text>
+  <g transform="translate(8, 7)">
+    <path d="M4 4 L22 23 L4 42 Z" fill="url(#cc-p1l)"/>
+    <path d="M22 23 L42 23 L18 8 Z" fill="url(#cc-p2l)"/>
+    <path d="M22 23 L42 23 L22 38 L4 42 Z" fill="url(#cc-p3l)" opacity="0.95"/>
+    <circle cx="22" cy="23" r="2.5" fill="#FFFFFF"/>
+  </g>
+  <text x="62" y="36" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" fill="#0F172A" letter-spacing="-0.5">Clip<tspan fill="#0284C7">Cut</tspan></text>
+  <text x="64" y="49" font-family="'Geist', 'Inter', system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing="2.8">AI SHORTS STUDIO</text>
 </svg>
