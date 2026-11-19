@@ -34,8 +34,39 @@ REMOTE_PARALLEL = int(os.environ.get("PEAKCUT_ASR_REMOTE_PARALLEL", "4"))   # pi
 REMOTE_SLOTS = threading.BoundedSemaphore(max(1, int(os.environ.get("PEAKCUT_ASR_REMOTE_INFLIGHT", "6"))))
 _remote_down_until = 0.0
 
+_whisper_model = None
+_whisper_lock = threading.Lock()
+
+
+def whisper_ready() -> bool:
+    try:
+        import faster_whisper  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def _whisper():
+    global _whisper_model
+    with _whisper_lock:
+        if _whisper_model is None:
+            from faster_whisper import WhisperModel
+            model_name = getattr(config, "WHISPER_MODEL", "base") or "base"
+            whisper_dir = str(config.MODELS_DIR / "whisper")
+            _whisper_model = WhisperModel(
+                model_name,
+                device="cpu",
+                compute_type="int8",
+                download_root=whisper_dir,
+                num_workers=max(1, min(4, (_CPUS or 4) // 2)),
+                cpu_threads=max(2, min(8, _CPUS or 4)),
+            )
+        return _whisper_model
+
 
 def model_ready() -> bool:
+    if getattr(config, "ASR_ENGINE", "whisper") == "whisper":
+        return whisper_ready()
     from . import fetch_model
     return fetch_model.ready()
 
@@ -273,9 +304,8 @@ def _decode_remote(pieces: list) -> list:
     return [(p["tokens"], p["timestamps"]) for p in got]
 
 
-def transcribe(audio: np.ndarray, on_progress=None) -> list:
-    """Returns [{'w': word, 's': start_sec, 'e': end_sec}, ...] for the whole audio.
-    Speech is cut at quiet moments into 12-24 s pieces; silent pieces are skipped."""
+def _transcribe_parakeet(audio: np.ndarray, on_progress=None) -> list:
+    """Returns [{'w': word, 's': start_sec, 'e': end_sec}, ...] using Parakeet."""
     global _remote_down_until
     words = []
     todo = []
@@ -294,18 +324,17 @@ def transcribe(audio: np.ndarray, on_progress=None) -> list:
         segs = [seg for _, _, seg in group]
         got = None
         while got is None:
-            # whichever is free first: a place on the card's machine, or a copy of the model on this one
             if remote and _remote_ok() and REMOTE_SLOTS.acquire(blocking=False):
                 try:
                     got = _decode_remote(segs)
-                except Exception:  # noqa: BLE001 - the card's machine is away or busy: these pieces are done here
+                except Exception:
                     _remote_down_until = time.time() + 60
                 finally:
                     REMOTE_SLOTS.release()
                 continue
             rec = _take_now()
             if rec is None and not (remote and _remote_ok()):
-                rec = _take()                                # nothing else to wait for: wait for a copy here
+                rec = _take()
             if rec is not None:
                 got = []
                 step = max(1, BATCH)
@@ -324,8 +353,6 @@ def transcribe(audio: np.ndarray, on_progress=None) -> list:
             on_progress(done[0] / len(groups))
         return out
 
-    # Pieces are independent, so they go to every copy of the model that is free: a video alone on the server
-    # uses all of it, and several videos share it piece by piece. The words come back in order.
     workers = REMOTE_PARALLEL if remote else COPIES
     if workers > 1 and len(groups) > 1:
         from concurrent.futures import ThreadPoolExecutor
@@ -337,10 +364,112 @@ def transcribe(audio: np.ndarray, on_progress=None) -> list:
         for piece in out:
             for w in piece:
                 if words and words[-1]["w"] == w["w"] and words[-1]["s"] == w["s"]:
-                    continue  # the model sometimes says the same word twice at the same moment
+                    continue
                 words.append(w)
-    # A word lasts until the next one starts, capped so pauses stay pauses.
     for i, w in enumerate(words):
         nxt = words[i + 1]["s"] if i + 1 < len(words) else w["e"] + 0.4
         w["e"] = round(max(w["s"] + 0.08, min(nxt, max(w["e"], w["s"] + 0.6))), 2)
     return words
+
+
+def detect_language(audio: np.ndarray) -> tuple[str, float]:
+    """Detect spoken language from the first 25 seconds of audio. Returns (lang_code, probability)."""
+    try:
+        m = _whisper()
+        sample_len = min(len(audio), 25 * 16000)
+        sample = audio[:sample_len].astype(np.float32) / 32768.0
+        if len(sample) < 4800:
+            return ("en", 1.0)
+        _, info = m.transcribe(sample, word_timestamps=False, vad_filter=False)
+        return (info.language or "en", float(info.language_probability or 0.0))
+    except Exception as e:
+        print(f"Language detection fallback: {e}")
+        return ("en", 0.0)
+
+
+def transcribe_whisper(audio: np.ndarray, on_progress=None, language: str = None) -> list:
+    """Multilingual speech-to-text with word timestamps using faster-whisper.
+    Accurately transcribes Hindi (Devanagari), Urdu, English and 90+ other languages."""
+    m = _whisper()
+    lang = language.strip().lower() if language and language.strip().lower() != "auto" else None
+    words = []
+    chunks = list(_chunks(audio))
+    if not chunks:
+        return []
+
+    done = 0
+    for a, b in chunks:
+        seg = audio[a:b].astype(np.float32) / 32768.0
+        if len(seg) < 4800 or float(np.sqrt((seg ** 2).mean())) < 0.003:
+            done += 1
+            if on_progress:
+                on_progress(done / len(chunks))
+            continue
+
+        off = a / 16000.0
+        seg_end = b / 16000.0
+        try:
+            kwargs = {"word_timestamps": True, "vad_filter": False}
+            if lang:
+                kwargs["language"] = lang
+            segments, info = m.transcribe(seg, **kwargs)
+            if not lang and info.language and getattr(info, "language_probability", 0) > 0.6:
+                lang = info.language
+
+            for s in segments:
+                if s.words:
+                    for w in s.words:
+                        txt = w.word.strip()
+                        if not txt:
+                            continue
+                        words.append({
+                            "w": txt,
+                            "s": round(off + float(w.start), 2),
+                            "e": round(min(seg_end, off + float(w.end)), 2)
+                        })
+                elif s.text.strip():
+                    parts = s.text.strip().split()
+                    dur = max(0.1, float(s.end) - float(s.start)) / max(1, len(parts))
+                    for idx, p in enumerate(parts):
+                        words.append({
+                            "w": p,
+                            "s": round(off + float(s.start) + idx * dur, 2),
+                            "e": round(off + float(s.start) + (idx + 1) * dur, 2)
+                        })
+        except Exception as e:
+            print(f"Whisper chunk decode error: {e}")
+
+        done += 1
+        if on_progress:
+            on_progress(done / len(chunks))
+
+    cleaned = []
+    for w in words:
+        if cleaned and cleaned[-1]["w"] == w["w"] and cleaned[-1]["s"] == w["s"]:
+            continue
+        cleaned.append(w)
+
+    for i, w in enumerate(cleaned):
+        nxt = cleaned[i + 1]["s"] if i + 1 < len(cleaned) else w["e"] + 0.4
+        w["e"] = round(max(w["s"] + 0.08, min(nxt, max(w["e"], w["s"] + 0.6))), 2)
+
+    return cleaned
+
+
+def transcribe(audio: np.ndarray, on_progress=None, language: str = None) -> list:
+    """Returns [{'w': word, 's': start_sec, 'e': end_sec}, ...] for the whole audio.
+    Automatically routes Hindi, Urdu, and multilingual speech to Whisper,
+    and English to Parakeet (or Whisper if Parakeet is unavailable)."""
+    lang = (language or "").strip().lower()
+    engine = getattr(config, "ASR_ENGINE", "whisper")
+
+    if lang in ("hi", "ur", "auto") or (lang and not lang.startswith("en")) or engine == "whisper":
+        try:
+            return transcribe_whisper(audio, on_progress=on_progress, language=lang)
+        except Exception as e:
+            print(f"Whisper transcription error: {e}, attempting Parakeet fallback")
+
+    try:
+        return _transcribe_parakeet(audio, on_progress=on_progress)
+    except Exception:
+        return transcribe_whisper(audio, on_progress=on_progress, language="en")

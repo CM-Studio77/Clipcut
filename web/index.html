@@ -412,7 +412,7 @@ img.av{object-fit:cover}
 .seg button small{font-size:11px;font-weight:500;color:var(--faint);transition:color .15s ease}
 .seg button:hover,.seg button:focus-visible{background:rgba(255,255,255,.06);color:#fff}
 .seg button[aria-pressed=true]{background:var(--brand-soft);color:var(--brand-ink)}
-.seg button[aria-pressed=true] small{color:#B8693A}
+.seg button[aria-pressed=true] small{color:var(--brand);opacity:.9}
 .range{display:flex;align-items:center;gap:8px}
 .range label{flex:1;display:flex;align-items:center;gap:6px;background:rgba(15,23,42,.8);border:1px solid var(--line);border-radius:10px;padding:0 10px;height:44px;font-size:12px;color:var(--faint);min-width:0}
 .composer.compact .range label{background:rgba(15,23,42,.8)}
@@ -1395,6 +1395,11 @@ function drawAdd(variant) {
         <label><input type="checkbox" id="o_captions" data-caption-toggle ${c?.captions === false ? "" : "checked"}>Generate captions</label></div>
         ${choice("o_style", Object.entries(S.status.styles).map(([k, v]) => ({v:k, label:v, prev:capPrev(k)})), c?.style ?? "bounce", c?.captions === false)}</div>
       <div class="ob"><div class="ot">Layout</div>${choice("o_layout", Object.entries(S.status.layouts).map(([k, v]) => ({v:k, label:LAYOUT_SHORT[k] || v, title:v, prev:`<span class="lay-prev ${esc(k)}"><span class="ph"><i></i></span></span>`})), c?.layout ?? "blur")}</div>
+      <div class="ob"><div class="ot">Language & Subtitles</div><input type="hidden" id="o_language" value="${esc(c?.language || 'auto')}"><div class="seg" role="group" aria-label="Audio and Subtitle Language">
+        <button type="button" data-seg="o_language" data-v="auto" aria-pressed="${(c?.language || 'auto') === 'auto'}">Auto<small>Detect Language 🌐</small></button>
+        <button type="button" data-seg="o_language" data-v="hi" aria-pressed="${c?.language === 'hi'}">Hindi / Hinglish<small>Subtitles in Hinglish 🇮🇳</small></button>
+        <button type="button" data-seg="o_language" data-v="en" aria-pressed="${c?.language === 'en'}">English<small>English Subtitles 🇺🇸</small></button>
+        <button type="button" data-seg="o_language" data-v="ur" aria-pressed="${c?.language === 'ur'}">Urdu<small>Roman Urdu 🇵🇰</small></button></div></div>
       <div class="ob"><div class="ot">Video quality</div><input type="hidden" id="o_quality" value="720"><div class="seg" role="group" aria-label="Video quality">
         <button type="button" data-seg="o_quality" data-v="720" aria-pressed="true">720p<small>Fast</small></button>
         <button type="button" data-seg="o_quality" data-v="1080" aria-pressed="false">1080p<small>Sharper, about 2x slower</small></button></div></div>
@@ -1460,7 +1465,7 @@ document.addEventListener("keydown", e => {
 const targetCreator = () => creatorId() || $("#o_creator")?.value || "";
 function jobOptions() {
   const n = id => { const v = $(id).value; return v === "" ? null : Number(v); };
-  const o = {max_clips:n("#o_max"), min_len:n("#o_min"), max_len:n("#o_maxlen"), captions:$("#o_captions").checked, style:$("#o_style").value, layout:$("#o_layout").value, quality:n("#o_quality")};
+  const o = {max_clips:n("#o_max"), min_len:n("#o_min"), max_len:n("#o_maxlen"), captions:$("#o_captions").checked, style:$("#o_style").value, layout:$("#o_layout").value, quality:n("#o_quality"), language:$("#o_language")?.value || "auto"};
   if (n("#o_from") !== null) o.range_start = n("#o_from") * 60;
   if (n("#o_to") !== null) o.range_end = n("#o_to") * 60;
   return o;
@@ -1875,6 +1880,7 @@ function drawCreatorForm() {
       <div class="fields"><label class="sw span"><input type="checkbox" data-k="captions" data-caption-toggle ${c.captions === false ? "" : "checked"}>Generate captions</label>
         <label class="f">Caption style<select data-k="style" data-caption-style ${c.captions === false ? "disabled" : ""}>${opts(S.status.styles, c.style)}</select></label>
         <label class="f">Layout<select data-k="layout">${opts(S.status.layouts, c.layout)}</select></label>
+        <label class="f">Language<select data-k="language">${opts(S.status.languages || {auto:"Auto Detect 🌐", hi:"Hindi / Hinglish 🇮🇳", en:"English 🇺🇸", ur:"Urdu 🇵🇰"}, c.language || "auto")}</select></label>
         <label class="f">Game<input data-k="game" value="${esc(c.game || "")}" placeholder="Read from the title"><small class="sub" style="font-weight:400">Left empty, the game is read from the stream's title. Set it for a streamer whose title says nothing: GTA 6, Fortnite, Elden Ring.</small></label>
         <label class="f">Shortest clip (seconds)<input data-k="min_len" type="number" value="${c.min_len}"></label>
         <label class="f">Longest clip (seconds)<input data-k="max_len" type="number" value="${c.max_len}"></label>

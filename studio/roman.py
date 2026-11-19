@@ -20,12 +20,32 @@ _VIRAMA, _NUKTA_SIGN = "्", "़"
 _NASAL = {"ं": "n", "ँ": "n"}
 _OTHER = {"ः": "h", "।": ".", "॥": ".", "ॐ": "om", **{chr(0x0966 + i): str(i) for i in range(10)}}
 # Common words whose everyday spelling the rules below would not guess.
-_WORDS = {"में": "mein", "मैं": "main", "हैं": "hain", "है": "hai", "नहीं": "nahi", "नही": "nahi", "हूँ": "hoon",
-          "हूं": "hoon", "क्या": "kya", "क्यों": "kyun", "क्यूँ": "kyun", "यह": "yeh", "वह": "woh", "और": "aur",
-          "भी": "bhi", "ही": "hi", "की": "ki", "जी": "ji", "तो": "to", "हाँ": "haan", "हां": "haan", "यहाँ": "yahan",
-          "यहां": "yahan", "वहाँ": "wahan", "वहां": "wahan", "कहाँ": "kahan", "कहां": "kahan", "थी": "thi",
-          "रही": "rahi", "कभी": "kabhi", "अभी": "abhi", "सभी": "sabhi", "भाई": "bhai", "मुझे": "mujhe",
-          "तुम": "tum", "हम": "hum", "आप": "aap", "बहुत": "bahut", "अच्छा": "accha", "ठीक": "theek", "लिए": "liye"}
+_WORDS = {
+    "में": "mein", "मैं": "main", "हैं": "hain", "है": "hai", "नहीं": "nahi", "नही": "nahi", "हूँ": "hoon",
+    "हूं": "hoon", "क्या": "kya", "क्यों": "kyun", "क्यूँ": "kyun", "यह": "yeh", "वह": "woh", "और": "aur",
+    "भी": "bhi", "ही": "hi", "की": "ki", "जी": "ji", "तो": "to", "हाँ": "haan", "हां": "haan", "यहाँ": "yahan",
+    "यहां": "yahan", "वहाँ": "wahan", "वहां": "wahan", "कहाँ": "kahan", "कहां": "kahan", "था": "tha", "थी": "thi",
+    "थे": "the", "रहा": "raha", "रही": "rahi", "रहे": "rahe", "कभी": "kabhi", "अभी": "abhi", "सभी": "sabhi",
+    "भाई": "bhai", "मुझे": "mujhe", "तुम": "tum", "हम": "hum", "आप": "aap", "बहुत": "bahut", "अच्छा": "accha",
+    "ठीक": "theek", "लिए": "liye", "हो": "ho", "हुआ": "hua", "हुई": "hui", "हुए": "hue", "कर": "kar", "करो": "karo",
+    "करना": "karna", "करते": "karte", "करती": "karti", "सकता": "sakta", "सकते": "sakte", "सकती": "sakti",
+    "गया": "gaya", "गए": "gaye", "गई": "gayi", "जाओ": "jao", "जा": "jaa", "देखा": "dekha", "देखो": "dekho",
+    "बोल": "bol", "बोला": "bola", "बोलो": "bolo", "सुनो": "suno", "सुना": "suna", "यार": "yaar", "दोस्त": "dost",
+    "दोस्तों": "dosto", "बात": "baat", "काम": "kaam", "लोग": "log", "लोगों": "logo", "सब": "sab", "कुछ": "kuch",
+    "कौन": "kaun", "कैसे": "kaise", "कैसा": "kaisa", "कैसी": "kaisi", "कब": "kab", "जब": "jab", "तब": "tab",
+    "अब": "ab", "अगर": "agar", "लेकिन": "lekin", "मगर": "magar", "फिर": "phir", "एक": "ek", "दो": "do",
+    "तीन": "teen", "चार": "chaar", "पांच": "paanch", "पैसा": "paisa", "पैसे": "paise", "वीडियो": "video",
+    "चैनल": "channel", "लाइव": "live", "स्ट्रीम": "stream", "गेम": "game", "मजा": "maza", "आया": "aaya",
+    "आए": "aaye", "आओ": "aao", "आएगा": "aayega", "जाएगा": "jaayega", "खेलेंगे": "khelenge", "करेंगे": "karenge",
+    "करूंगा": "karunga", "करूंगी": "karungi", "होगा": "hoga", "होगी": "hogi", "होंगे": "honge", "रुको": "ruko",
+    "चल": "chal", "चलो": "chalo", "नमस्ते": "namaste",
+    "धन्यवाद": "dhanyawad", "शुक्रिया": "shukriya", "स्वागत": "swagat", "मेरा": "mera", "मेरी": "meri",
+    "मेरे": "mere", "तेरा": "tera", "तेरी": "teri", "तेरे": "tere", "उसका": "uska", "उसकी": "uski",
+    "उसके": "uske", "इनका": "inka", "इनके": "inke", "इनकी": "inki", "उनका": "unka", "उनकी": "unki",
+    "उनके": "unke", "इसको": "isko", "उसको": "usko", "इनको": "inko", "उनको": "unko", "कि": "ki", "से": "se",
+    "पर": "par", "पे": "pe", "का": "ka", "के": "ke", "को": "ko", "तक": "tak", "साथ": "saath", "पास": "paas",
+    "पहले": "pehle", "बाद": "baad", "सिर्फ": "sirf", "बस": "bas"
+}
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 OTHER_SCRIPT = re.compile(r"[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]")   # Urdu / Arabic letters
 

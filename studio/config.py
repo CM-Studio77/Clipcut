@@ -124,7 +124,9 @@ FONTS_DIR = DATA_DIR / "fonts"          # caption fonts, copied from studio/font
 # YouTube already has a word-by-word transcript of most videos. With this on, that is what the AI reads to find the
 # clips (seconds instead of transcribing hours), and our own model is run only on the clips themselves.
 YT_TRANSCRIPT = env("PEAKCUT_YT_TRANSCRIPT", "1") != "0"
-# the compact model for processors; a machine with a graphics card sets PEAKCUT_ASR_MODEL to the full-precision one
+# Speech recognition engine: "whisper" (multilingual: Hindi, Urdu, English, 90+ langs) or "parakeet" (English-only)
+ASR_ENGINE = env("PEAKCUT_ASR_ENGINE", "whisper").strip().lower()
+WHISPER_MODEL = env("PEAKCUT_WHISPER_MODEL", "base").strip()
 ASR_MODEL_NAME = env("PEAKCUT_ASR_MODEL", "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8")
 ASR_MODEL_DIR = MODELS_DIR / ASR_MODEL_NAME
 DATABASE_URL = env("DATABASE_URL") or f"sqlite:///{(DATA_DIR / 'peakcut.db').as_posix()}"
