@@ -1,0 +1,26 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="clipcut-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="50%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="accent-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo Mark Icon -->
+  <rect x="10" y="10" width="80" height="80" rx="22" fill="url(#clipcut-grad)"/>
+  
+  <!-- Stylized Cut Symbol inside Icon -->
+  <path d="M38 30L62 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+  <path d="M62 30L38 70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-dasharray="16 10"/>
+  <circle cx="50" cy="50" r="7" fill="#0B0F19"/>
+  <circle cx="50" cy="50" r="4" fill="#22D3EE"/>
+
+  <!-- Brand Typography -->
+  <text x="110" y="58" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="800" font-size="42" fill="#FFFFFF" letter-spacing="-1">Clip<tspan fill="url(#accent-grad)">Cut</tspan></text>
+  <text x="112" y="78" font-family="'Geist', 'Inter', 'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="12" fill="#94A3B8" letter-spacing="3.5">STUDIO AI</text>
+</svg>
