@@ -373,6 +373,13 @@ def request_render(jid, cid, changes: dict):
         new["style"] = DEFAULTS["style"]
     if new.get("layout") not in render.LAYOUTS:
         new["layout"] = DEFAULTS["layout"]
+    if new.get("layout") in ("gameplay", "split_top", "split_bottom") and not new.get("facecam"):
+        if job.get("facecam"):
+            new["facecam"] = job["facecam"]
+        else:
+            face = _facecam(job)
+            if face:
+                new["facecam"] = face
     clip.update(new, status="queued")
     save(job)
     _q.put(("clip", jid, cid))
@@ -767,7 +774,7 @@ def _run_job(job):
                      captions=o.get("captions", True), status="queued", version=0)
             # Only the gameplay layout uses a webcam, so it is only looked for then, and only once: a
             # stream with no webcam is not looked for again on every clip of it.
-            if o["layout"] == "gameplay" and face is False:
+            if o["layout"] in ("gameplay", "split_top", "split_bottom") and face is False:
                 face = _facecam(job)
             if face:
                 c["facecam"] = face
