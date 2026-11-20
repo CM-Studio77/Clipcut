@@ -2182,7 +2182,11 @@ async function drawSettings() {
             <div class="fields"><label class="f">${esc(st.id_label)}<input id="app_id" placeholder="${st.ready ? "Saved: " + esc(st.id_hint) + ". Paste a new one to replace it" : ""}" autocomplete="off" spellcheck="false"></label>
               <label class="f">${esc(st.secret_label)}<input id="app_secret" type="password" placeholder="${st.ready ? "Saved. Paste a new one to replace it" : ""}" autocomplete="off"></label></div>
             <p class="sub">${g[3]}</p>
-            <div class="row"><button class="btn primary" data-act="appsave" data-p="${pf}">Save</button><button class="btn ghost" data-act="appsetup" data-p="">Close</button></div></div>` : "";
+            <div class="row"><button class="btn primary" data-act="appsave" data-p="${pf}">Save</button><button class="btn ghost" data-act="appsetup" data-p="">Close</button></div>
+            ${pf === "instagram" ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)"><p class="sub"><b>Or connect directly with an Instagram Access Token:</b></p>
+            <div class="fields"><label class="f">Instagram Access Token<input id="ig_token_input" placeholder="EAAB... (Paste token here)" autocomplete="off"></label></div>
+            <div class="row"><button class="btn sm" type="button" data-act="ig_tokensave">Connect with Token</button></div></div>` : ""}
+          </div>` : "";
         return `<div class="appcard"><span class="applogo" style="background:${bg}">${logo}</span>
           <div class="apptx"><b>${name}</b><span>${desc}</span>${listOf(accs)}</div><div class="appact">${act}</div>${panel}</div>`;
       };
@@ -2584,6 +2588,17 @@ document.addEventListener("click", async e => {
     if (a === "appsave") {
       await send("/api/apps", {platform: d.p, client_id: $("#app_id").value, client_secret: $("#app_secret").value}, "PUT");
       S.setupOpen = ""; S.status = await api("/api/status"); toast("Saved. People can connect now.", "ok"); return drawSettings();
+    }
+    if (a === "ig_tokensave") {
+      const token = $("#ig_token_input")?.value?.trim();
+      if (!token) return toast("Please paste an Instagram Access Token", "bad");
+      try {
+        const r = await send("/api/accounts/instagram/token", {token});
+        S.status = await api("/api/status");
+        await tick();
+        toast("Connected Instagram: " + r.account.name, "ok");
+        return drawSettings();
+      } catch (err) { return toast(err.message, "bad"); }
     }
     if (a === "bell") return openBell();
     if (a === "feedback") return openFeedback("bug");

@@ -1425,6 +1425,18 @@ def connect_callback(platform: str, code: str = "", state: str = "", error: str 
     return _back(connected=platform, name=acc["name"])
 
 
+@app.post("/api/accounts/instagram/token")
+def add_instagram_token(body: dict = Body(...)):
+    token = (body.get("token") or "").strip()
+    if not token:
+        raise HTTPException(400, "Token is required")
+    try:
+        acc = accounts.instagram_add(token)
+        return {"ok": True, "account": accounts.public(acc)}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
 @app.get("/pub/{token}.mp4")
 def public_clip(token: str):
     """A clip for a platform to fetch while posting it: one clip, one hour, signed (see accounts.clip_link)."""
