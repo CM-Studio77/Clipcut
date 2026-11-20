@@ -456,8 +456,10 @@ def _caption_words(job, clip, words, off):
         raw = [w for w in words if clip["start"] - 1 <= w["s"] <= clip["end"] + 1]
         try:
             usage.set_context(job.get("creator"), job.get("title") or "")
+            # For Hindi/Urdu, never borrow YouTube's broken English auto-translations; use Whisper + roman transliteration!
+            yt_en = (lambda: _english_part(job, clip)) if job.get("lang") not in ("hi", "ur") else None
             raw = brain.english_captions(raw, job.get("lang") or "", job.get("title") or "",
-                                         youtube_english=lambda: _english_part(job, clip))
+                                         youtube_english=yt_en)
             clip.update(fixed_words=raw, fixed_for=span)
         except Exception:  # noqa: BLE001 - captions still render with the words as heard
             pass
@@ -711,8 +713,9 @@ def _run_job(job):
     blocks = [(x, min(hi, x + step)) for x in range(lo, hi, step)] or [(lo, hi)]
     words, tokens, model = [], 0, None
     done_blocks = 0
+    opt_lang = (o.get("language") or "auto").strip().lower()
     yt = None
-    if src["type"] == "url" and config.YT_TRANSCRIPT and media.is_youtube(src["url"]):
+    if src["type"] == "url" and config.YT_TRANSCRIPT and media.is_youtube(src["url"]) and opt_lang not in ("hi", "ur"):
         try:
             yt = media.youtube_words(src["url"])
         except Exception:  # noqa: BLE001 - no transcript to borrow: ours is written as usual
@@ -722,7 +725,6 @@ def _run_job(job):
         job["transcript_from"] = "youtube" if yt else "own"
         job["lang"] = yt[1] if yt else ""          # the language spoken, when YouTube says (decides the captions)
 
-    opt_lang = (o.get("language") or "auto").strip().lower()
     if opt_lang in ("hi", "ur", "en"):
         job_lang = opt_lang
     elif yt and yt[1]:
