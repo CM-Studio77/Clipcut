@@ -24,6 +24,7 @@ SCHEMA = {
             "title": {"type": "STRING"},
             "description": {"type": "STRING"},
             "hashtags": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "tags": {"type": "ARRAY", "items": {"type": "STRING"}},
             "highlight_words": {"type": "ARRAY", "items": {"type": "STRING"}},
             "reason": {"type": "STRING"},
         },
@@ -57,14 +58,15 @@ Rules:
 - Do not pick intros, sponsor reads, "like and subscribe", or dead air.
 - Skip weak moments. Fewer strong clips beat many weak ones. Return [] if nothing is worth clipping.
 - score: 0-100, how likely a stranger keeps watching. Be honest; most clips are 50-80.
-- hook: at most 5 words, ALL CAPS, shown as big text on the video. Curiosity, but true to what happens.
-- title: at most 70 characters, for the post.
-- description: one or two sentences.
-- hashtags: 5 tags without the # sign.
+- hook: at most 5 words, ALL CAPS, shown as big text on the video. Curiosity, punchy or intense reaction.
+- title: at most 70 characters. High-CTR, viral YouTube Shorts title with relevant emojis and ending with #Shorts.
+  * If the video is in Hindi, Urdu, or by an Indian creator: MUST write the title in engaging, viral HINGLISH (conversational Roman Hindi, e.g. "Bhai Ye Kaha Fass Gaye?! 😭 #Shorts", "Avantika Bohot Jyada Dar Gayi 💀", "CarryisLive Ka Crazy Reaction 😂 #Shorts"). Never use plain English for Hindi creators!
+  * For English or international creators, write high-CTR English titles with emojis and #Shorts.
+- description: 2-3 engaging sentences describing what happens in the clip with SEO keywords, ending with a Call-To-Action ("Watch till end! Like and Subscribe for more!"). If the video is Hindi/Urdu, write this description in natural, exciting Hinglish.
+- hashtags: 8 to 12 viral and topic-specific hashtags without the # sign (e.g. Shorts, ViralShorts, Trending, YouTubeShorts, plus creator name and topic/game keywords).
+- tags: 15 to 20 search keywords/phrases for YouTube Studio's tag box (e.g. "gta 6 gameplay", "carryminati funny moments", "indian gaming", "viral shorts", "trending shorts", "yt shorts").
 - highlight_words: 3 to 6 single words spoken in the clip that carry the punch.
-- Write hook, title, description, hashtags and highlight_words in English. If the video is in Hindi or Urdu,
-  you may write them the way people type Hindi and Urdu in Roman letters (Hinglish: "yaar ye kya hai"), never
-  in Devanagari or Urdu script. For any other language, write them in English.
+- For Hindi or Urdu videos, write hook, title, description, and tags in Roman letters (Hinglish: "yaar ye kya hai"), never in Devanagari or Urdu script. For other languages, write in English.
 - category: one of funny, fail, clutch, rage, shock, take, story, other.
 - reason: one short sentence on why it works.
 
@@ -118,25 +120,120 @@ def _fmt(lines):
                      for l in lines)
 
 
-def _tidy(c, s, e, game=None):
-    """Whatever the AI answered, only this shape ever leaves here: clamped numbers, short link-free text."""
+def _tidy(c, s, e, game=None, uploader=None, title_hint=None):
+    """Whatever the AI answered, only this shape ever leaves here: clamped numbers, short link-free text, full SEO."""
     cat = str(c.get("category", "other")).lower()
-    tags = c.get("hashtags") if isinstance(c.get("hashtags"), list) else []
-    tags = [re.sub(r"\W", "", str(h))[:30] for h in tags if isinstance(h, (str, int))]
-    # The tags of the game are put on every post, whatever the AI wrote: people search for the game.
+    raw_ht = c.get("hashtags") if isinstance(c.get("hashtags"), list) else []
+    tags = [re.sub(r"\W", "", str(h))[:30] for h in raw_ht if isinstance(h, (str, int))]
     for t in games.tags_of(game):
-        t = re.sub(r"\W", "", str(t or ""))[:30]     # a tag with a space in it is not a hashtag
+        t = re.sub(r"\W", "", str(t or ""))[:30]
         if t and t.lower() not in {x.lower() for x in tags}:
             tags.append(t)
+    for core in ("Shorts", "ViralShorts", "Trending"):
+        if core.lower() not in {x.lower() for x in tags}:
+            tags.append(core)
+
+    raw_yt = c.get("tags") if isinstance(c.get("tags"), list) else []
+    yt_tags = [re.sub(r"[^\w\s-]", "", str(t)).strip()[:50] for t in raw_yt if isinstance(t, (str, int)) and str(t).strip()]
+    needed = []
+    if uploader:
+        needed.append(str(uploader).strip().lower())
+    if game:
+        needed.extend([str(game).strip().lower(), f"{game.lower()} gameplay", f"{game.lower()} shorts"])
+    needed.extend([t.lower() for t in tags[:6]])
+    needed.extend(["shorts", "yt shorts", "trending shorts", "viral video", "gaming shorts", "shorts feed"])
+    for nt in needed:
+        if nt and nt.lower() not in {x.lower() for x in yt_tags}:
+            yt_tags.append(nt)
+
     words = c.get("highlight_words") if isinstance(c.get("highlight_words"), list) else []
+    
+    t_str = roman.to_roman(_text(c.get("title"), 100))
+    if "#Shorts" not in t_str and "#shorts" not in t_str and len(t_str) <= 60:
+        t_str = f"{t_str} #Shorts"
+
     return {
         "start": s, "end": e, "score": max(0, min(100, int(_num(c.get("score"))))),
         "category": cat if cat in CATEGORIES else "other",
-        "hook": roman.to_roman(_text(c.get("hook"), 60)).upper(), "title": roman.to_roman(_text(c.get("title"), 100)),
-        "description": roman.to_roman(_text(c.get("description"), 300)),
-        "hashtags": [t for t in tags if t][:8],
+        "hook": roman.to_roman(_text(c.get("hook"), 60)).upper(),
+        "title": t_str,
+        "description": roman.to_roman(_text(c.get("description"), 500)),
+        "hashtags": [t for t in tags if t][:12],
+        "tags": [t for t in yt_tags if t][:20],
         "highlight_words": [roman.to_roman(_text(h, 30)) for h in words][:8],
         "reason": _text(c.get("reason"), 200),
+    }
+
+
+SEO_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "title": {"type": "STRING"},
+        "description": {"type": "STRING"},
+        "hashtags": {"type": "ARRAY", "items": {"type": "STRING"}},
+        "tags": {"type": "ARRAY", "items": {"type": "STRING"}},
+    },
+    "required": ["title", "description", "hashtags", "tags"],
+}
+
+
+def generate_seo_metadata(video_title: str, uploader: str, clip_text: str, game: str = "", lang: str = "hi") -> dict:
+    """Generate viral, high-CTR YouTube SEO package (Hinglish/English title, description, hashtags, and tags)."""
+    is_hindi = (lang or "").lower().startswith(("hi", "ur")) or any(roman.needs_roman(w) for w in clip_text.split()[:50])
+    
+    lang_prompt = (
+        "Write in viral, high-CTR HINGLISH (conversational Roman Hindi like 'Bhai Ye Kaha Fass Gaye?! 😭 #Shorts', 'Avantika Bohot Jyada Dar Gayi 💀'). "
+        "DO NOT use Devanagari script; use clean Roman letters. "
+        if is_hindi else
+        "Write in viral, high-CTR English with emojis and #Shorts. "
+    )
+    
+    prompt = f"""You are a top YouTube Shorts SEO expert. Generate high-ranking, viral metadata for a short video clip.
+Video source: {video_title}
+Channel/Creator: {uploader}
+Game/Topic: {game or 'General / Gaming / Vlog'}
+Spoken in clip:
+{clip_text[:3000]}
+
+Instructions:
+1. title: Max 70 chars. {lang_prompt}Must include 1-2 emotional emojis and end with '#Shorts'.
+2. description: 2-3 engaging sentences describing what happens in the clip with SEO keywords, ending with a Call to Action ('Watch till the end! Like and Subscribe for more!').
+3. hashtags: 8 to 12 viral and topic-specific hashtags without '#' sign (e.g. Shorts, ViralShorts, Trending, YouTubeShorts, plus creator name and topic/game).
+4. tags: 15 to 20 search keywords/phrases for YouTube Studio's tag box (comma-separated style, e.g. 'gta 6', 'funny moments', 'gaming shorts', 'trending shorts', creator name, etc.).
+
+Return JSON matching the schema.
+"""
+    out, _m, _u = ask_ai(prompt, SEO_SCHEMA, purpose="SEO generation")
+    if not isinstance(out, dict):
+        out = {}
+    
+    title = roman.to_roman(_text(out.get("title", ""), 100))
+    if "#Shorts" not in title and "#shorts" not in title:
+        title = f"{title} #Shorts"
+        
+    desc = roman.to_roman(_text(out.get("description", ""), 500))
+    
+    raw_ht = out.get("hashtags") if isinstance(out.get("hashtags"), list) else []
+    ht = [re.sub(r"\W", "", str(h))[:30] for h in raw_ht if h]
+    for core in ("Shorts", "ViralShorts", "Trending"):
+        if core.lower() not in {x.lower() for x in ht}:
+            ht.append(core)
+            
+    raw_tags = out.get("tags") if isinstance(out.get("tags"), list) else []
+    tags = [re.sub(r"[^\w\s-]", "", str(t)).strip()[:50] for t in raw_tags if t and str(t).strip()]
+    if uploader and str(uploader).lower() not in {x.lower() for x in tags}:
+        tags.insert(0, str(uploader))
+    if game and str(game).lower() not in {x.lower() for x in tags}:
+        tags.append(str(game))
+    for core_tag in ("shorts", "yt shorts", "viral shorts", "trending"):
+        if core_tag not in {x.lower() for x in tags}:
+            tags.append(core_tag)
+            
+    return {
+        "title": title,
+        "description": desc,
+        "hashtags": ht[:12],
+        "tags": tags[:20]
     }
 
 
@@ -307,7 +404,7 @@ def find_clips(words, db, duration, title="", uploader="", max_clips=6, min_len=
             continue
         if _overlaps(s, e, clips):
             continue  # overlaps a better clip
-        clips.append(_tidy(c, s, e, game))
+        clips.append(_tidy(c, s, e, game, uploader, title))
         if len(clips) >= max_clips:
             break
     clips.sort(key=lambda c: c["start"])
@@ -329,7 +426,7 @@ def find_live_clips(words, z, now, chat=None, title="", uploader="", min_len=15,
         s, e = _snap(c, lines, words, min_len, max_len, now)
         if e - s < min_len - 1 or _overlaps(s, e, list(existing) + clips):
             continue
-        clips.append(_tidy(c, s, e, game))
+        clips.append(_tidy(c, s, e, game, uploader, title))
     return clips, spent
 
 
@@ -352,7 +449,7 @@ def describe(text, title="", uploader="", game=None, timeout=None):
                                  purpose="Hand clip: title and hook", timeout=timeout)
         if not out:
             return blank
-        c = _tidy(out[0], 0, 0, game)
+        c = _tidy(out[0], 0, 0, game, uploader, title)
         c["reason"] = "Clipped by hand."
         return c
     except Exception:  # noqa: BLE001
@@ -447,7 +544,7 @@ def judge_transcript(words, start, now, title="", uploader="", min_len=15, max_l
         s, e = _snap(c, lines, words, min_len, max_len, now)
         if e - s < min_len - 1 or _overlaps(s, e, list(existing) + clips):
             continue
-        clips.append(_tidy(c, s, e, game))
+        clips.append(_tidy(c, s, e, game, uploader, title))
     return clips, spent
 
 

@@ -2218,10 +2218,43 @@ function drawClipDlg(full) {
           <label class="f">Layout<select data-f="layout">${opts(S.status.layouts, c.layout)}</select></label></div>
         <div class="two"><label class="f">Start (seconds)<input data-f="start" type="number" step="0.5" value="${c.start}"></label>
           <label class="f">End (seconds)<input data-f="end" type="number" step="0.5" value="${c.end}"></label></div>
-        <h3>Post text</h3>
-        <label class="f">Title<input data-f="title" value="${esc(c.title)}"></label>
-        <label class="f">Description<textarea data-f="description" rows="2">${esc(c.description)}</textarea></label>
-        <button class="btn" data-act="remake">${ic("scissors")}Save and re-make clip</button>
+        <h3>YouTube SEO & Post Text</h3>
+        <div class="row" style="margin-bottom:8px;gap:6px">
+          <button class="btn sm primary" type="button" data-act="genseo" data-j="${j.id}" data-c="${esc(c.id)}">✨ Generate Hinglish SEO</button>
+          <button class="btn sm" type="button" data-act="copyallseo" data-j="${j.id}" data-c="${esc(c.id)}">📋 Copy Full YouTube SEO Package</button>
+        </div>
+        <label class="f">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span>Title (#Shorts included)</span>
+            <button class="btn sm ghost icon" type="button" data-act="copytext" data-t="${esc(c.title || '')}" title="Copy Title">${ic("copy")} Copy</button>
+          </div>
+          <input data-f="title" value="${esc(c.title)}">
+        </label>
+        <label class="f">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span>Description</span>
+            <button class="btn sm ghost icon" type="button" data-act="copytext" data-t="${esc(c.description || '')}" title="Copy Description">${ic("copy")} Copy</button>
+          </div>
+          <textarea data-f="description" rows="2">${esc(c.description)}</textarea>
+        </label>
+        <label class="f">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span>Hashtags (#)</span>
+            <button class="btn sm ghost icon" type="button" data-act="copytext" data-t="${esc((c.hashtags || []).map(h => '#' + h.replace(/^#/, '')).join(' '))}" title="Copy Hashtags">${ic("copy")} Copy</button>
+          </div>
+          <input data-f="hashtags" value="${esc((c.hashtags || []).map(h => '#' + h.replace(/^#/, '')).join(' '))}">
+        </label>
+        <label class="f">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span>YouTube Tags (Paste in YouTube Studio Tags Box)</span>
+            <button class="btn sm ghost icon" type="button" data-act="copytext" data-t="${esc((c.tags || c.hashtags || []).map(t => t.replace(/^#/, '')).join(', '))}" title="Copy Tags">${ic("copy")} Copy</button>
+          </div>
+          <input data-f="tags" value="${esc((c.tags || c.hashtags || []).map(t => t.replace(/^#/, '')).join(', '))}">
+        </label>
+        <div class="row" style="margin-top:6px;gap:6px">
+          <button class="btn" type="button" data-act="savemeta" data-j="${j.id}" data-c="${esc(c.id)}">Save SEO metadata</button>
+          <button class="btn" data-act="remake">${ic("scissors")}Save and re-make video</button>
+        </div>
         <h3>Post it</h3>
         <div id="dposts" class="row" style="gap:4px"></div>
         ${S.accounts.length ? `<div class="row">${S.accounts.map(a => `<label class="ck"><input type="checkbox" data-pacc value="${esc(a.id)}">${esc(a.label)} · ${esc(a.name)}</label>`).join("")}</div>
@@ -2397,9 +2430,43 @@ document.addEventListener("click", async e => {
       });
       dlg.returnValue = "no"; return dlg.showModal();
     }
-    if (a === "copy") {
-      const c = jobOf(d.j).clips.find(x => x.id === d.c);
-      await navigator.clipboard.writeText(`${c.title}\n\n${c.description}\n\n${(c.hashtags || []).map(h => "#" + h).join(" ")}`); return toast("Post text copied", "ok");
+    if (a === "copy" || a === "copyallseo") {
+      const c = jobOf(d.j)?.clips?.find(x => x.id === d.c);
+      if (!c) return;
+      const ht = (c.hashtags || []).map(h => "#" + h.replace(/^#/, "")).join(" ");
+      const tagStr = (c.tags || c.hashtags || []).map(t => t.replace(/^#/, "")).join(", ");
+      const text = `▶ TITLE:\n${c.title || ""}\n\n▶ DESCRIPTION:\n${c.description || ""}\n\n${ht}\n\n▶ TAGS (Copy & Paste in YouTube Tags Box):\n${tagStr}`;
+      await navigator.clipboard.writeText(text);
+      return toast("Full YouTube SEO Package copied to clipboard!", "ok");
+    }
+    if (a === "genseo") {
+      toast("Generating viral Hinglish SEO…", "ok");
+      try {
+        const r = await send(`/api/jobs/${d.j}/clips/${encodeURIComponent(d.c)}/seo`, {lang: "hi"});
+        const j = jobOf(d.j);
+        if (j) {
+          const c = j.clips.find(x => x.id === d.c);
+          if (c) Object.assign(c, r.clip);
+        }
+        drawClipDlg(true);
+        return toast("✨ Viral Hinglish SEO generated!", "ok");
+      } catch (err) { return toast(err.message, "bad"); }
+    }
+    if (a === "savemeta") {
+      try {
+        const title = $('[data-f="title"]')?.value || "";
+        const description = $('[data-f="description"]')?.value || "";
+        const hashtags = $('[data-f="hashtags"]')?.value || "";
+        const tags = $('[data-f="tags"]')?.value || "";
+        const r = await send(`/api/jobs/${d.j}/clips/${encodeURIComponent(d.c)}/meta`, {title, description, hashtags, tags});
+        const j = jobOf(d.j);
+        if (j) {
+          const c = j.clips.find(x => x.id === d.c);
+          if (c) Object.assign(c, r.clip);
+        }
+        drawClipDlg(true);
+        return toast("SEO metadata saved", "ok");
+      } catch (err) { return toast(err.message, "bad"); }
     }
     if (a === "logout") { await api("/api/auth/logout", {method:"POST"}); location.href = "/"; return; }
     if (a === "pwsave") {

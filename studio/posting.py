@@ -118,7 +118,10 @@ def _post(p):
         creator = creators.get(job["creator"]) or dict(creators.DEFAULTS, name="clips")
         title, cap = clip.get("title") or clip.get("hook") or "Clip", _caption(clip, creator)
         if acc["platform"] == "youtube":
-            rid, url = accounts.youtube_upload(acc, path, title, cap + "\n\n#Shorts", clip.get("hashtags", []), creator["privacy"])
+            yt_tags = clip.get("tags") or [h.lstrip("#") for h in clip.get("hashtags", [])]
+            if "#Shorts" not in title and "#shorts" not in title and len(title) <= 90:
+                title = f"{title} #Shorts"
+            rid, url = accounts.youtube_upload(acc, path, title, cap + "\n\n#Shorts", yt_tags, creator["privacy"])
         elif acc["platform"] == "instagram":
             rid, url = accounts.instagram_upload(acc, path, f"{title}\n\n{cap}", job["id"])
         elif acc["platform"] == "tiktok":

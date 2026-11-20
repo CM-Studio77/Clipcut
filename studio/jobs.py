@@ -399,6 +399,16 @@ def request_render(jid, cid, changes: dict):
     for k in ("hook", "title", "description", "style", "layout"):
         if k in changes:
             new[k] = str(changes[k])[:{"hook": 60, "title": 100, "description": 2000}.get(k, 20)]
+    if "hashtags" in changes:
+        if isinstance(changes["hashtags"], list):
+            new["hashtags"] = [str(x).strip().lstrip("#") for x in changes["hashtags"] if x][:15]
+        elif isinstance(changes["hashtags"], str):
+            new["hashtags"] = [h.strip().lstrip("#") for h in changes["hashtags"].replace(",", " ").split() if h.strip()][:15]
+    if "tags" in changes:
+        if isinstance(changes["tags"], list):
+            new["tags"] = [str(x).strip() for x in changes["tags"] if x][:25]
+        elif isinstance(changes["tags"], str):
+            new["tags"] = [t.strip() for t in changes["tags"].split(",") if t.strip()][:25]
     if new.get("style") not in render.STYLES:
         new["style"] = DEFAULTS["style"]
     if new.get("layout") not in render.LAYOUTS:
@@ -413,6 +423,97 @@ def request_render(jid, cid, changes: dict):
     clip.update(new, status="queued")
     save(job)
     _q.put(("clip", jid, cid))
+
+
+def update_clip_metadata(jid, cid, changes: dict):
+    job = _jobs[jid]
+    clip = next(c for c in job["clips"] if c["id"] == cid)
+    for k in ("hook", "title", "description"):
+        if k in changes:
+            clip[k] = str(changes[k])[:{"hook": 60, "title": 100, "description": 2000}.get(k, 20)]
+    if "hashtags" in changes:
+        if isinstance(changes["hashtags"], list):
+            clip["hashtags"] = [str(x).strip().lstrip("#") for x in changes["hashtags"] if x][:15]
+        elif isinstance(changes["hashtags"], str):
+            clip["hashtags"] = [h.strip().lstrip("#") for h in changes["hashtags"].replace(",", " ").split() if h.strip()][:15]
+    if "tags" in changes:
+        if isinstance(changes["tags"], list):
+            clip["tags"] = [str(x).strip() for x in changes["tags"] if x][:25]
+        elif isinstance(changes["tags"], str):
+            clip["tags"] = [t.strip() for t in changes["tags"].split(",") if t.strip()][:25]
+    save(job)
+    d = Path(job["dir"])
+    post = {k: clip[k] for k in ("title", "description", "hashtags", "tags", "hook", "start", "end", "score") if k in clip}
+    (d / "clips" / f"{clip['id']}.json").write_text(json.dumps(post, indent=1), encoding="utf-8")
+    export_publish_guide(job)
+    return clip
+
+
+def export_publish_guide(job) -> Path:
+    """Generates a complete YOUTUBE_PUBLISH_GUIDE.txt formatted for copying into YouTube Studio."""
+    d = Path(job["dir"])
+    clips = [c for c in job.get("clips", []) if c.get("status") == "done"]
+    guide_path = d / "clips" / "YOUTUBE_PUBLISH_GUIDE.txt"
+    if not clips:
+        return guide_path
+        
+    lines = [
+        "=" * 72,
+        "            YOUTUBE SHORTS PUBLISH & SEO MASTER GUIDE",
+        "=" * 72,
+        "",
+        f"Video Source: {job.get('title') or job.get('source', {}).get('name') or 'Video'}",
+        f"Creator/Channel: {job.get('uploader') or job.get('creator') or 'Creator'}",
+        f"Total Ready Shorts: {len(clips)}",
+        "",
+        "SETTINGS FOR YOUTUBE UPLOAD:",
+        "1. Audience: 'No, it is not made for kids'",
+        "2. Category: Gaming (or Entertainment/People & Blogs)",
+        "3. Shorts Remixing: Allow video and audio remixing",
+        "4. Title: Copy TITLE below (already includes viral emojis & #Shorts)",
+        "5. Description: Copy DESCRIPTION below (includes CTA + viral #hashtags)",
+        "6. Tags: Copy TAGS below and paste directly into YouTube Studio Tags box!",
+        "",
+    ]
+    
+    for i, c in enumerate(clips, 1):
+        cid = c.get("id", f"clip{i:02d}")
+        cfile = c.get("file") or f"{cid}.mp4"
+        lines.append("=" * 72)
+        lines.append(f"                       CLIP {i} DETAILS ({cid})")
+        lines.append("=" * 72)
+        lines.append(f"📁 File: {cfile}")
+        lines.append("")
+        lines.append("▶ TITLE:")
+        lines.append(c.get("title") or c.get("hook") or "Untitled Clip")
+        lines.append("")
+        lines.append("▶ DESCRIPTION:")
+        lines.append(c.get("description") or "")
+        lines.append("")
+        ht = " ".join("#" + h.lstrip("#") for h in c.get("hashtags", []))
+        if ht:
+            lines.append(ht)
+            lines.append("")
+        lines.append("▶ TAGS (Copy & Paste in YouTube Tags Box):")
+        tags_str = ", ".join(c.get("tags") or [h.lstrip("#") for h in c.get("hashtags", [])])
+        lines.append(tags_str)
+        lines.append("")
+        
+    txt_content = "\n".join(lines)
+    try:
+        (d / "clips").mkdir(parents=True, exist_ok=True)
+        guide_path.write_text(txt_content, encoding="utf-8")
+    except Exception:
+        pass
+    
+    ready_dir = Path(r"C:\Users\Kesha\Downloads\ai\READY_FOR_YOUTUBE")
+    if ready_dir.is_dir():
+        try:
+            (ready_dir / f"PUBLISH_GUIDE_{job['id']}.txt").write_text(txt_content, encoding="utf-8")
+        except Exception:
+            pass
+            
+    return guide_path
 
 
 def render_one(job, clip, words):
@@ -430,8 +531,9 @@ def render_one(job, clip, words):
         near = _caption_words(job, clip, words, off) if clip.get("captions", True) else []
         out = render.render_clip(src, d / "clips", clip["id"], local, near, job["width"], job["height"])
         clip.update(out, status="done", version=clip.get("version", 0) + 1, error=None)
-        post = {k: clip[k] for k in ("title", "description", "hashtags", "hook", "start", "end", "score")}
+        post = {k: clip[k] for k in ("title", "description", "hashtags", "tags", "hook", "start", "end", "score") if k in clip}
         (d / "clips" / f"{clip['id']}.json").write_text(json.dumps(post, indent=1), encoding="utf-8")
+        export_publish_guide(job)
         if clip["version"] == 1:
             clip.setdefault("made_at", time.time())
             creators.log(job["creator"], f"Clip ready (score {clip['score']}): {clip['title'] or clip['hook']}")
@@ -843,6 +945,7 @@ def _run_job(job):
                  "note": "The AI was unavailable, so clips were picked by loudness only." if clips and not model else ""}
     stage = "Done" if clips else "Done, but nothing clip-worthy was found"
     _set(job, status="done", stage=stage, progress=1.0, took=round(time.time() - t0))
+    export_publish_guide(job)
     try:
         from . import notices
         name = job.get("title") or job["source"].get("name") or "your video"

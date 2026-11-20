@@ -944,6 +944,49 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
     return jobs.public(job)
 
 
+@app.post("/api/jobs/{jid}/clips/{cid}/seo")
+def generate_clip_seo(jid: str, cid: str, body: dict = Body(default={})):
+    job = _job_or_404(jid)
+    clip = next((c for c in job["clips"] if c["id"] == cid), None)
+    if not clip:
+        raise HTTPException(404, "No such clip")
+    
+    d = Path(job["dir"])
+    words = []
+    if (d / "words.json").is_file():
+        try:
+            all_words = json.loads((d / "words.json").read_text(encoding="utf-8"))
+            words = [w.get("w", "") for w in all_words if clip["start"] <= w.get("s", 0) <= clip["end"]]
+        except Exception:
+            pass
+    clip_text = " ".join(words) if words else clip.get("title") or clip.get("hook") or ""
+    
+    video_title = job.get("title") or job.get("source", {}).get("name") or ""
+    uploader = job.get("uploader") or job.get("creator") or ""
+    game = job.get("game") or ""
+    lang = body.get("lang") or job.get("lang") or "hi"
+    
+    seo = brain.generate_seo_metadata(video_title, uploader, clip_text, game=game, lang=lang)
+    clip.update(
+        title=seo["title"],
+        description=seo["description"],
+        hashtags=seo["hashtags"],
+        tags=seo["tags"]
+    )
+    jobs.save(job)
+    post = {k: clip[k] for k in ("title", "description", "hashtags", "tags", "hook", "start", "end", "score") if k in clip}
+    (d / "clips" / f"{clip['id']}.json").write_text(json.dumps(post, indent=1), encoding="utf-8")
+    jobs.export_publish_guide(job)
+    return {"ok": True, "clip": clip, "seo": seo}
+
+
+@app.post("/api/jobs/{jid}/clips/{cid}/meta")
+def update_clip_meta(jid: str, cid: str, body: dict = Body(...)):
+    _job_or_404(jid)
+    clip = jobs.update_clip_metadata(jid, cid, body)
+    return {"ok": True, "clip": clip}
+
+
 @app.delete("/api/jobs/{jid}")
 def delete_job(jid: str):
     _job_or_404(jid)
