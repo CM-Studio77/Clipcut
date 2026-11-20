@@ -946,11 +946,23 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
 
 @app.delete("/api/jobs/{jid}")
 def delete_job(jid: str):
-    job = _job_or_404(jid)
-    if job["status"] in ("queued", "running", "live") or jid in live.SESSIONS:
-        raise HTTPException(409, "This is still being worked on. Stop it or wait for it to finish first.")
+    _job_or_404(jid)
     jobs.delete(jid)
     return {"ok": True}
+
+
+@app.post("/api/jobs/{jid}/stop")
+def stop_job(jid: str):
+    _job_or_404(jid)
+    ok = jobs.stop(jid)
+    return {"ok": ok}
+
+
+@app.post("/api/jobs/{jid}/retry")
+def retry_job(jid: str):
+    _job_or_404(jid)
+    ok = jobs.retry(jid)
+    return {"ok": ok}
 
 
 def _pairs(v, limit=300) -> list:

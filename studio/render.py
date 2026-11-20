@@ -78,10 +78,12 @@ def install_fonts():
             shutil.copyfile(f, config.FONTS_DIR / f.name)
 
 
-LAYOUTS = {"blur": "Full frame + blurred fill", "zoom": "Zoomed in + blurred fill", "crop": "Fill the screen (centre crop)",
-           "split_top": "Split: Facecam on TOP + Gameplay on BOTTOM",
-           "split_bottom": "Split: Facecam on BOTTOM + Gameplay on TOP",
-           "gameplay": "Gameplay fills the screen, facecam in the corner"}
+LAYOUTS = {"split_bottom": "Split: Gameplay on TOP (70%) + Streamer on BOTTOM (30%)",
+           "split_top": "Split: Streamer on TOP (30%) + Gameplay on BOTTOM (70%)",
+           "gameplay": "Gameplay fills the screen, facecam in the corner",
+           "blur": "Full frame + blurred fill",
+           "zoom": "Zoomed in + blurred fill",
+           "crop": "Fill the screen (centre crop)"}
 
 
 def _ts(t):
@@ -236,28 +238,31 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 PIP_W = 380            # how wide the facecam is in the 1080-wide frame
 PIP_MARGIN = 26
-SPLIT_FACE_H = 800
-SPLIT_GAME_H = 1120
+SPLIT_FACE_H = 600      # Streamer webcam takes ~31% of screen
+SPLIT_GAME_H = 1320     # Gameplay takes ~69% of screen (Game video takes majority of vertical space)
 
 
 def _filter(layout, fg_h, facecam=None):
     if layout in ("split_top", "split_bottom"):
+        # Only split if a valid facecam exists; if there is no streamer facecam in the video,
+        # do NOT split (avoid duplicate cuts). Fallback to clean full-frame 9:16 gameplay!
         if facecam and len(facecam) == 4 and facecam[2] > 8 and facecam[3] > 8:
             fx, fy, fw, fh = (int(v) for v in facecam)
             fc_crop = f"crop={fw}:{fh}:{fx}:{fy}"
+            
+            if layout == "split_top":
+                return (f"[0:v]fps={config.OUT_FPS},split=2[fcin][gamein];"
+                        f"[fcin]{fc_crop},scale={W}:{SPLIT_FACE_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_FACE_H},setsar=1[fc];"
+                        f"[gamein]scale={W}:{SPLIT_GAME_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_GAME_H},setsar=1[game];"
+                        f"[fc][game]vstack=inputs=2[v0];")
+            else:  # split_bottom: Gameplay on TOP (1320px) + Facecam on BOTTOM (600px)
+                return (f"[0:v]fps={config.OUT_FPS},split=2[gamein][fcin];"
+                        f"[gamein]scale={W}:{SPLIT_GAME_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_GAME_H},setsar=1[game];"
+                        f"[fcin]{fc_crop},scale={W}:{SPLIT_FACE_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_FACE_H},setsar=1[fc];"
+                        f"[game][fc]vstack=inputs=2[v0];")
         else:
-            fc_crop = "crop=in_w:in_h*0.42:0:0"
-        
-        if layout == "split_top":
-            return (f"[0:v]fps={config.OUT_FPS},split=2[fcin][gamein];"
-                    f"[fcin]{fc_crop},scale={W}:{SPLIT_FACE_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_FACE_H},setsar=1[fc];"
-                    f"[gamein]scale={W}:{SPLIT_GAME_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_GAME_H},setsar=1[game];"
-                    f"[fc][game]vstack=inputs=2[v0];")
-        else:
-            return (f"[0:v]fps={config.OUT_FPS},split=2[gamein][fcin];"
-                    f"[gamein]scale={W}:{SPLIT_GAME_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_GAME_H},setsar=1[game];"
-                    f"[fcin]{fc_crop},scale={W}:{SPLIT_FACE_H}:force_original_aspect_ratio=increase,crop={W}:{SPLIT_FACE_H},setsar=1[fc];"
-                    f"[game][fc]vstack=inputs=2[v0];")
+            # No streamer facecam in the video: fill screen with clean gameplay
+            return f"[0:v]fps={config.OUT_FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1[v0];"
 
     if layout == "gameplay" and facecam:
         # The game fills the screen, and the webcam sits in the top corner of it, so a viewer sees
@@ -283,7 +288,9 @@ def _hook_y(layout, hook_y, facecam=None):
     if layout == "gameplay" and facecam and len(facecam) == 4 and facecam[2] > 8:
         return PIP_MARGIN + int(round(PIP_W * facecam[3] / facecam[2])) + 32
     if layout in ("split_top", "split_bottom"):
-        return 220
+        if facecam and len(facecam) == 4 and facecam[2] > 8:
+            return 160 if layout == "split_bottom" else (SPLIT_FACE_H + 30)
+        return hook_y
     return hook_y
 
 

@@ -353,6 +353,33 @@ def delete(jid):
     return bool(job)
 
 
+def stop(jid):
+    with _lock:
+        job = _jobs.get(jid)
+        if not job:
+            return False
+        job["status"] = "error"
+        job["error"] = "Stopped by user"
+        job["stage"] = "Stopped"
+    save(job)
+    return True
+
+
+def retry(jid):
+    with _lock:
+        job = _jobs.get(jid)
+        if not job:
+            return False
+        job["status"] = "queued"
+        job["stage"] = "Waiting"
+        job["progress"] = 0.0
+        job["error"] = None
+        job["resume"] = True
+    save(job)
+    start()
+    return True
+
+
 def request_render(jid, cid, changes: dict):
     job = _jobs[jid]
     clip = next(c for c in job["clips"] if c["id"] == cid)
