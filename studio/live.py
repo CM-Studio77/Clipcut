@@ -803,6 +803,53 @@ def start_session(creator: dict, url=None) -> dict:
     return job
 
 
+def connect_live_url(url: str, creator_id: str = None) -> dict:
+    """Connect and start monitoring a live stream URL directly."""
+    url = normalize(url)
+    c = None
+    if creator_id:
+        c = creators.get(creator_id)
+    if not c:
+        cs = creators.all_creators()
+        if cs:
+            c = cs[0]
+        else:
+            c = creators.create("Live Studio", url)
+    return start_session(c, url)
+
+
+def get_sessions_info() -> list:
+    """Return real-time state for all active live sessions of this user."""
+    out = []
+    for s in active_mine():
+        with s.lock:
+            elapsed = int(s.samples / SR) if SR else 0
+            lines = [w["text"] for w in s.words[-6:]] if s.words else []
+            db_recent = s.db[-60:] if len(s.db) >= 60 else s.db
+            spikes = getattr(s, "spikes", 0)
+            chat_count = s.chat_total
+            verdicts = getattr(s, "verdicts", [])[-4:]
+            
+        out.append({
+            "id": s.job["id"],
+            "title": s.job.get("title") or s.job.get("source", {}).get("name", "Live Stream"),
+            "uploader": s.job.get("uploader", ""),
+            "url": s.job.get("source", {}).get("url", ""),
+            "platform": "youtube" if "youtube" in s.job.get("source", {}).get("url", "") else "twitch" if "twitch" in s.job.get("source", {}).get("url", "") else "kick",
+            "elapsed": elapsed,
+            "stage": s.job.get("stage", "Recording"),
+            "lines": lines,
+            "db": db_recent,
+            "spikes": spikes,
+            "chat_total": chat_count,
+            "verdicts": verdicts,
+            "clips_count": len(s.job.get("clips", [])),
+            "clips": s.job.get("clips", []),
+            "facecam": s.job.get("facecam")
+        })
+    return out
+
+
 def _watch_user(uid):
     """Start recording any of this user's auto-record creators who have gone live."""
     from . import profiles

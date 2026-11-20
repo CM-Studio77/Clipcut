@@ -106,8 +106,20 @@ def enqueue(job, clip, account_ids, now=False) -> list:
 
 def on_clip_ready(job, clip):
     """Called once when a clip first finishes rendering."""
+    # Fixed Configuration: Human Approval Required. Add every finished clip to approval queue.
+    from . import approval
+    uid = job.get("user") or ctx.uid()
+    if uid:
+        try:
+            approval.add(uid, job["id"], clip["id"])
+        except Exception:
+            pass
+
     c = creators.get(job["creator"])
-    if not c or not c["autopost"] or not c["accounts"]:
+    if not c or not c.get("autopost") or not c.get("accounts"):
+        return
+    # If autopost is explicitly enabled and auto_approve is set, proceed
+    if not c.get("auto_approve_no_review", False):
         return
     if clip.get("score", 0) < c["post_min_score"]:
         return  # includes hand-made clips (score 0): those wait for you to press Post
@@ -142,6 +154,8 @@ def _post(p):
             rid, url = accounts.instagram_upload(acc, path, f"{title}\n\n{cap}", job["id"])
         elif acc["platform"] == "tiktok":
             rid, url = accounts.tiktok_upload(acc, path, f"{title}\n\n{cap}", creator["privacy"])
+        elif acc["platform"] == "facebook":
+            rid, url = accounts.facebook_upload(acc, path, title, cap, job["id"])
         else:
             raise RuntimeError("That kind of account is no longer supported.")
         p.update(status="posted", posted_at=time.time(), remote_id=rid, url=url, error=None)
@@ -263,6 +277,11 @@ def overview() -> dict:
     daily = [{"day": d, "clips": made[d], "posted": posted[d], "views": views[d]} for d in days]
     return {"paused": accounts.settings()["paused"], "creators": rows, "posts": show, "daily": daily,
             "alerts": alerts.configured(), "recording": len(live.active_mine())}
+
+
+def history(limit: int = 100) -> list:
+    """List posts for the current user, most recent first."""
+    return sorted(_mine(), key=lambda p: p.get("created", 0), reverse=True)[:limit]
 
 
 def digest_text() -> str:

@@ -1437,6 +1437,83 @@ def add_instagram_token(body: dict = Body(...)):
         raise HTTPException(400, str(e))
 
 
+@app.post("/api/accounts/facebook/token")
+def add_facebook_token(body: dict = Body(...)):
+    token = (body.get("token") or "").strip()
+    if not token:
+        raise HTTPException(400, "Token is required")
+    try:
+        acc = accounts.facebook_add(token)
+        return {"ok": True, "account": accounts.public(acc)}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+# ================================================================ approval center
+@app.get("/api/approval/queue")
+def approval_queue():
+    from . import approval
+    return approval.queue(ctx.uid())
+
+
+@app.get("/api/approval/history")
+def approval_history():
+    from . import approval
+    return approval.history(ctx.uid())
+
+
+@app.post("/api/approval/{item_id}/approve")
+def approval_approve(item_id: str, body: dict = Body(...)):
+    from . import approval
+    try:
+        return approval.approve(ctx.uid(), item_id, body.get("platforms"), body.get("meta"))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/approval/{item_id}/reject")
+def approval_reject(item_id: str, body: dict = Body({})):
+    from . import approval
+    try:
+        return approval.reject(ctx.uid(), item_id, body.get("reason", ""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/approval/submit")
+def approval_submit(body: dict = Body(...)):
+    from . import approval
+    job_id = str(body.get("job_id", ""))
+    clip_id = str(body.get("clip_id", ""))
+    if not job_id or not clip_id:
+        raise HTTPException(400, "job_id and clip_id are required")
+    return approval.add(ctx.uid(), job_id, clip_id, body.get("platforms"), body.get("meta"))
+
+
+# ================================================================ live stream connection & studio
+@app.post("/api/live/connect")
+def live_connect(body: dict = Body(...)):
+    url = str(body.get("url", "")).strip()
+    if not url:
+        raise HTTPException(400, "Live stream URL is required")
+    try:
+        job = live.connect_live_url(url, body.get("creator_id"))
+        return jobs.public(job)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/live/sessions")
+def live_sessions():
+    return live.get_sessions_info()
+
+
+# ================================================================ publishing history
+@app.get("/api/posts/history")
+def posts_history():
+    return posting.history(100)
+
+
 @app.get("/pub/{token}.mp4")
 def public_clip(token: str):
     """A clip for a platform to fetch while posting it: one clip, one hour, signed (see accounts.clip_link)."""

@@ -32,7 +32,7 @@ IG_UPLOAD = "https://rupload.facebook.com/ig-api-upload/v21.0"
 IG_SCOPES = "instagram_business_basic,instagram_business_content_publish"
 TT = "https://open.tiktokapis.com/v2"
 TT_SCOPES = "user.info.basic,video.publish"
-PLATFORM_NAMES = {"youtube": "YouTube", "instagram": "Instagram", "tiktok": "TikTok"}
+PLATFORM_NAMES = {"youtube": "YouTube", "instagram": "Instagram", "tiktok": "TikTok", "facebook": "Facebook Reels"}
 
 
 def _dir() -> Path:
@@ -70,8 +70,9 @@ def _write(name, data):
 # name -> (what the platform calls the id, what it calls the secret, .env names for both)
 APPS = {"google": ("Client ID", "Client secret", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
         "instagram": ("Instagram app ID", "Instagram app secret", "PEAKCUT_IG_APP_ID", "PEAKCUT_IG_APP_SECRET"),
-        "tiktok": ("Client key", "Client secret", "PEAKCUT_TIKTOK_CLIENT_KEY", "PEAKCUT_TIKTOK_CLIENT_SECRET")}
-APP_FOR = {"youtube": "google", "instagram": "instagram", "tiktok": "tiktok"}
+        "tiktok": ("Client key", "Client secret", "PEAKCUT_TIKTOK_CLIENT_KEY", "PEAKCUT_TIKTOK_CLIENT_SECRET"),
+        "facebook": ("Meta App ID", "Meta App Secret", "PEAKCUT_FB_APP_ID", "PEAKCUT_FB_APP_SECRET")}
+APP_FOR = {"youtube": "google", "instagram": "instagram", "tiktok": "tiktok", "facebook": "facebook"}
 _apps_seen = {"at": None, "data": {}}
 
 
@@ -277,6 +278,11 @@ def _all() -> list:
 
 def get(aid):
     return next((a for a in _all() if a["id"] == aid), None)
+
+
+def public(acc: dict) -> dict:
+    return {"id": acc["id"], "platform": acc["platform"], "label": PLATFORM_NAMES.get(acc["platform"], acc["platform"]),
+            "name": acc["name"], "added": acc.get("added", 0), "detail": acc.get("detail", "")}
 
 
 def list_accounts() -> list:
@@ -577,3 +583,85 @@ def tiktok_upload(acc, path: Path, caption: str, privacy: str = "public"):
         acc["detail"] = "Posts are private until this server's TikTok app is reviewed"
         _put(acc)
     return str(ids[0]) if ids else box["publish_id"], url
+
+
+def for_user(uid: str) -> list:
+    """Returns connected accounts for a specific user ID."""
+    d = config.user_dir(uid) / "accounts" / "accounts.json"
+    if not d.exists():
+        return []
+    try:
+        data = json.loads(d.read_text(encoding="utf-8"))
+        return [a for a in data if a.get("platform") in PLATFORM_NAMES]
+    except Exception:
+        return []
+
+
+# ------------------------------------------------------------------ Facebook Reels (Meta Graph API)
+FB_GRAPH = "https://graph.facebook.com/v19.0"
+
+
+def facebook_add(token: str) -> dict:
+    """Add a Facebook Page/Account using a Meta User Access Token."""
+    token = token.strip()
+    me = _check(httpx.get(f"{FB_GRAPH}/me", params={"fields": "id,name", "access_token": token}, timeout=30), "Reading Facebook profile").json()
+    pages_req = httpx.get(f"{FB_GRAPH}/me/accounts", params={"access_token": token}, timeout=30)
+    pages = pages_req.json().get("data", []) if pages_req.status_code == 200 else []
+    
+    page_id = pages[0]["id"] if pages else me["id"]
+    page_name = pages[0]["name"] if pages else me.get("name", "Facebook")
+    page_token = pages[0]["access_token"] if pages else token
+    
+    acc = {"id": f"fb_{page_id}", "platform": "facebook", "name": f"FB: {page_name}", "added": time.time(),
+           "page_id": str(page_id), "token": page_token, "user_token": token,
+           "detail": f"Page: {page_name}" if pages else "Personal Profile"}
+    _put(acc)
+    return acc
+
+
+def facebook_upload(acc, path: Path, title: str, description: str, job_id: str = ""):
+    """Upload a Reel to Facebook using Meta Graph API."""
+    token = acc.get("token") or acc.get("user_token")
+    page_id = acc.get("page_id", "me")
+    file_size = path.stat().st_size
+    
+    # 1. Initialize upload session
+    try:
+        init_res = _check(httpx.post(f"{FB_GRAPH}/{page_id}/video_reels", data={
+            "upload_phase": "start",
+            "access_token": token
+        }, timeout=30), "Starting Facebook Reel").json()
+        video_id = init_res.get("video_id")
+        upload_url = init_res.get("upload_url")
+    except Exception:
+        # Fallback to direct page video post
+        init_res = None
+        upload_url = None
+    
+    if upload_url and video_id:
+        with path.open("rb") as f:
+            headers = {
+                "Authorization": f"OAuth {token}",
+                "offset": "0",
+                "file_size": str(file_size)
+            }
+            _check(httpx.post(upload_url, content=f.read(), headers=headers, timeout=900), "Uploading Facebook Reel binary")
+            
+        pub = _check(httpx.post(f"{FB_GRAPH}/{page_id}/video_reels", data={
+            "upload_phase": "finish",
+            "video_id": video_id,
+            "video_state": "PUBLISHED",
+            "description": f"{title}\n\n{description}"[:2200],
+            "access_token": token
+        }, timeout=60), "Publishing Facebook Reel").json()
+        return video_id, f"https://www.facebook.com/reel/{video_id}"
+    else:
+        with path.open("rb") as f:
+            direct = _check(httpx.post(f"{FB_GRAPH}/{page_id}/videos", data={
+                "title": title[:255],
+                "description": f"{title}\n\n{description}"[:2200],
+                "access_token": token
+            }, files={"source": (path.name, f.read(), "video/mp4")}, timeout=900), "Posting Facebook Video").json()
+            vid = direct.get("id", "")
+            return vid, f"https://www.facebook.com/video/{vid}"
+

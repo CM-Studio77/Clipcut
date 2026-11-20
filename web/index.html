@@ -843,6 +843,55 @@ dialog[open]{animation:fadein .16s ease}
   .set-sec h2{font-size:16px}
   .ai-big{font-size:24px}
 }
+
+/* ---------- Phase 1-10: Live Studio, Approval Center, Publishing History ---------- */
+.live-studio-wrap{display:grid;gap:20px;animation:rise .25s ease both}
+.live-studio-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1.1fr);gap:18px;align-items:start}
+@media (max-width:1024px){.live-studio-grid{grid-template-columns:1fr}}
+.live-player-box{position:relative;aspect-ratio:16/9;background:#05070C;border-radius:14px;overflow:hidden;border:1px solid var(--line-2);box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.live-player-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.live-timeline{margin-top:12px;background:rgba(15,23,42,.8);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.live-timeline-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;color:var(--dim);margin-bottom:8px}
+.live-timeline-bar{height:12px;border-radius:999px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.live-timeline-marker{position:absolute;top:0;bottom:0;width:8px;border-radius:999px;background:#F43F5E;box-shadow:0 0 10px #F43F5E}
+.live-feed-box{background:rgba(17,24,39,.75);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.live-feed-title{font-size:13px;font-weight:700;color:var(--brand-ink);display:flex;align-items:center;gap:8px}
+.live-transcript-feed{max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.45;color:var(--text);padding:8px 10px;background:rgba(15,23,42,.9);border-radius:10px;border:1px solid var(--line-2)}
+.live-transcript-line{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:8px}
+.live-transcript-time{font-family:monospace;font-size:11px;color:var(--dim);flex:none}
+.live-chat-scroll{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:rgba(15,23,42,.9);border-radius:10px;border:1px solid var(--line-2);font-size:13px}
+.live-chat-msg{display:flex;gap:6px;align-items:baseline}
+.live-chat-user{font-weight:700;color:#818CF8;font-size:12px}
+.multimodal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.multimodal-chip{background:rgba(15,23,42,.8);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.multimodal-chip span{font-size:11px;color:var(--dim)}
+.multimodal-chip b{font-size:14px;color:var(--brand-ink)}
+
+/* Approval Center */
+.approval-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.approval-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.approval-card{background:rgba(17,24,39,.85);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.5);transition:all .2s ease}
+.approval-card:hover{border-color:rgba(99,102,241,.4);box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 20px rgba(99,102,241,.15)}
+.approval-preview{position:relative;aspect-ratio:9/16;background:#05070C;max-height:360px;overflow:hidden;display:grid;place-items:center}
+.approval-preview video,.approval-preview img{width:100%;height:100%;object-fit:cover}
+.approval-score-badge{position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;background:rgba(15,23,42,.85);backdrop-filter:blur(8px);border:1px solid var(--brand);color:#FFD2AE}
+.approval-dur-badge{position:absolute;top:12px;right:12px;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(0,0,0,.7);color:#fff}
+.approval-body{padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.approval-field{display:flex;flex-direction:column;gap:4px}
+.approval-field label{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
+.approval-field input,.approval-field textarea{font-size:13px}
+.approval-platforms{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0}
+.approval-plat-label{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px;font-weight:600;cursor:pointer;color:var(--text);transition:all .15s ease}
+.approval-plat-label:has(input:checked){background:rgba(99,102,241,.2);border-color:var(--brand);color:#fff}
+.approval-actions{display:flex;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.approval-actions .btn{flex:1}
+
+/* Publishing History */
+.history-table-wrap{background:rgba(17,24,39,.75);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.history-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.history-table th{background:rgba(15,23,42,.8);padding:12px 16px;font-weight:600;color:var(--dim);border-bottom:1px solid var(--line)}
+.history-table td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.history-table tr:hover td{background:rgba(255,255,255,.03)}
 </style>
 </head>
 <body>
@@ -1279,9 +1328,14 @@ function moveInd() {
   lastInd = {x, w};
 }
 function drawShell() {  const nav = (v, icon, label, extra = "") => `<button class="nav-item ${S.view === v ? "on" : ""}" data-act="go" data-v="${esc(v)}" title="${esc(label)}">${icon}<span class="label">${esc(label)}</span>${extra}</button>`;
+  const apprCount = (S.approvalQueue || []).length;
+  const liveCount = S.jobs.filter(j => j.status === "live").length;
   put($("#nav"), nav("overview", navIc("home", "overview"), "Home") +
+    nav("live-studio", `<span class="rdot ${liveCount ? "on" : ""}"></span>`, "Live Studio", liveCount ? `<span class="sb-tag rec">Live</span>` : "") +
+    nav("approval", ic("check"), "Approval Center", apprCount ? `<span class="count" style="background:#F43F5E;color:#fff">${apprCount}</span>` : "") +
     nav("library", navIc("film", "library"), "All videos", (() => { const w = S.jobs.filter(j => ["queued", "running"].includes(j.status)).length;
       return w ? `<span class="working" title="${w} working now"><i></i>${w} working</span>` : S.jobs.length ? `<span class="count">${S.jobs.length}</span>` : ""; })()) +
+    nav("pub-history", ic("clock"), "Publishing History") +
     `<h4><span>Creators</span></h4>` +
     S.creators.map(c => nav("c:" + c.id, cav(c), c.name,
       c.live_job ? `<span class="sb-tag rec" title="Recording now"><i></i>Rec</span>`
@@ -1297,7 +1351,10 @@ function drawShell() {  const nav = (v, icon, label, extra = "") => `<button cla
       <button class="icon-btn bell" data-act="bell" title="Notifications" aria-label="Notifications${S.status.unread ? `, ${S.status.unread} new` : ""}" aria-haspopup="dialog">${ic("bell")}${S.status.unread ? `<span class="dotn">${S.status.unread > 9 ? "9+" : S.status.unread}</span>` : ""}</button></div>` : ""));
   const c = creator();
   const recording = S.creators.filter(x => x.live_job).length;
-  let title = {overview:"Home", library:"All videos", settings:"Settings", usage:"AI usage"}[S.view] || "", sub = "", act = "";
+  let title = {overview:"Home", "live-studio":"Live Studio", approval:"Approval Center", "pub-history":"Publishing History", library:"All videos", settings:"Settings", usage:"AI usage"}[S.view] || "", sub = "", act = "";
+  if (S.view === "live-studio") sub = "Autonomous real-time live stream highlight & clipping workspace.";
+  if (S.view === "approval") sub = "Review, edit SEO & approve clips before social publishing.";
+  if (S.view === "pub-history") sub = "Published Shorts & Reels across YouTube, Instagram, TikTok and Facebook.";
   if (S.view === "usage") sub = "What the AI has been used for.";
   if (S.view === "overview") sub = `${greeting()}. ${S.creators.length} creator${S.creators.length === 1 ? "" : "s"}${recording ? `, ${recording} recording now` : ""}.`;
   if (S.view === "library") sub = "Every video and recording, across all creators.";
@@ -1335,7 +1392,7 @@ function drawShell() {  const nav = (v, icon, label, extra = "") => `<button cla
   put($("#title"), `<span>${esc(title)}</span>`); put($("#subtitle"), subHtml ?? esc(sub)); put($("#actions"), act);
 }
 
-const ROUTES = {overview: "", library: "videos", settings: "settings", usage: "usage"};
+const ROUTES = {overview: "", library: "videos", "live-studio": "live-studio", approval: "approval", "pub-history": "history", settings: "settings", usage: "usage"};
 function pathFor(v, tab) {
   if (v.startsWith("c:")) return `/app/creators/${encodeURIComponent(v.slice(2))}${tab && tab !== "clips" ? "/" + tab : ""}`;
   if (v === "settings") return "/app/settings" + (tab ? "/" + tab : "");
@@ -1379,6 +1436,9 @@ function go(v, tab, fromHistory) {
       </div>
       <div id="add"></div></section>` : "";
   if (v === "overview") view.innerHTML = `<div id="ov"></div>`;
+  else if (v === "live-studio") { view.innerHTML = `<div id="liveStudioSlot"></div>`; drawLiveStudio(); }
+  else if (v === "approval") { view.innerHTML = `<div id="approvalSlot"></div>`; drawApprovalCenter(); }
+  else if (v === "pub-history") { view.innerHTML = `<div id="pubHistorySlot"></div>`; drawPubHistory(); }
   else if (v === "library") view.innerHTML = `<div id="add"></div><div id="jobs"></div>`;
   else if (v === "settings") view.innerHTML = `<div id="sform"></div>`;
   else if (v === "usage") { view.innerHTML = `<div id="usage"></div>`; loadUsage(); }
@@ -1877,6 +1937,404 @@ function drawJobs() {
   });
 }
 
+/* ============================================================ Live Studio */
+let liveStudioTimer = null;
+async function drawLiveStudio() {
+  const root = $("#liveStudioSlot"); if (!root) return;
+  clearInterval(liveStudioTimer);
+  
+  let sessions = [];
+  try { sessions = await api("/api/live/sessions"); } catch {}
+  
+  if (!sessions.length) {
+    root.innerHTML = `<div class="live-studio-wrap">
+      <div class="card" style="max-width:800px;margin:20px auto;padding:32px 28px;text-align:center">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);color:#F43F5E;font-size:12px;font-weight:700;margin-bottom:14px">
+          <span class="dot"></span>Autonomous Live AI Monitor Active
+        </div>
+        <h2 style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:8px">Connect Live Stream</h2>
+        <p class="help" style="font-size:14px;max-width:540px;margin:0 auto 24px">Paste a live stream URL from YouTube, Twitch or Kick. Clipcut watches continuously, tracks chat spikes, listens to shouting/reactions, and generates 9:16 viral shorts automatically.</p>
+        
+        <div style="display:flex;gap:10px;max-width:640px;margin:0 auto 18px">
+          <input id="live_url_input" placeholder="https://www.youtube.com/watch?v=... or twitch.tv/streamer" style="height:48px;font-size:15px" autofocus>
+          <button class="btn primary" id="live_start_btn" style="height:48px;padding:0 22px;font-size:14px" onclick="startLiveMonitor()">${ic("bolt")}Start AI Monitor</button>
+        </div>
+        
+        <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+          <button type="button" class="chip" onclick="$('#live_url_input').value='https://www.youtube.com/@CarryisLive/live';$('#live_url_input').focus()">CarryisLive (YouTube)</button>
+          <button type="button" class="chip" onclick="$('#live_url_input').value='https://www.twitch.tv/shroud';$('#live_url_input').focus()">Shroud (Twitch)</button>
+          <button type="button" class="chip" onclick="$('#live_url_input').value='https://www.twitch.tv/tarik';$('#live_url_input').focus()">Tarik (Twitch)</button>
+        </div>
+        
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:left">
+          <div style="background:rgba(255,255,255,.03);padding:14px;border-radius:12px">
+            <b style="color:#fff;display:block;margin-bottom:4px;font-size:13px">Multimodal Intelligence</b>
+            <span class="sub" style="font-size:12px">Voice tone, shouting, laughter & visual game action tracked in real time.</span>
+          </div>
+          <div style="background:rgba(255,255,255,.03);padding:14px;border-radius:12px">
+            <b style="color:#fff;display:block;margin-bottom:4px;font-size:13px">Hinglish / Hindi NLP</b>
+            <span class="sub" style="font-size:12px">Full Roman Hindi speech-to-text, punchy hooks & high-CTR viral titles.</span>
+          </div>
+          <div style="background:rgba(255,255,255,.03);padding:14px;border-radius:12px">
+            <b style="color:#fff;display:block;margin-bottom:4px;font-size:13px">Human Approval</b>
+            <span class="sub" style="font-size:12px">Every generated clip waits in Approval Center before being published.</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
+  
+  const s = sessions[0];
+  const src = playerSrc(s.platform, s.url);
+  
+  root.innerHTML = `<div class="live-studio-wrap">
+    <div class="dash-welcome-bar" style="margin-bottom:0">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="pill live"><span class="dot"></span>ON AIR</span>
+          <h2 style="font-size:18px;margin:0">${esc(s.title || "Live Session")}</h2>
+        </div>
+        <p class="sub" style="margin-top:4px">${esc(s.uploader)} · Monitoring live stream with Multimodal AI</p>
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="manualLiveClip(30)">${ic("scissors")}Clip Last 30s</button>
+        <button class="btn" onclick="manualLiveClip(60)">Last 60s</button>
+        <button class="btn danger" onclick="stopLiveMonitor('${esc(s.id)}')">${ic("stop")}Stop Monitoring</button>
+      </div>
+    </div>
+    
+    <div class="live-studio-grid">
+      <!-- Left Column: Video Player & Timeline -->
+      <div>
+        <div class="live-player-box">
+          ${src ? `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`
+                : `<div class="noembed"><b>Stream Connected</b><span>Monitoring audio & transcript in background.</span></div>`}
+        </div>
+        
+        <div class="live-timeline">
+          <div class="live-timeline-head">
+            <span>🔴 Live Stream Session Timeline · ${fmt(s.elapsed || 0)} recorded</span>
+            <span>Spikes Detected: <b style="color:#F43F5E">${s.spikes || 0}</b></span>
+          </div>
+          <div class="live-timeline-bar" id="liveTimelineBar">
+            <div style="width:100%;height:100%;background:linear-gradient(90deg,#6366F1 0%,#8B5CF6 100%);opacity:.3"></div>
+            ${(s.verdicts || []).map(v => `<div class="live-timeline-marker" style="left:${Math.min(96, Math.max(4, (v.t % 300) / 3))}%" title="Highlight at ${fmt(v.t)}"></div>`).join("")}
+          </div>
+        </div>
+        
+        <div style="margin-top:16px">
+          <h3 style="font-size:15px;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            ${ic("film")}Clips Extracted from This Session (${s.clips ? s.clips.length : 0})
+          </h3>
+          <div class="grid" id="liveClipsGrid">
+            ${(s.clips || []).length ? s.clips.map(c => clipHtml({id: s.id}, c)).join("") : `<div class="empty" style="padding:24px"><span class="sub">Listening for high-action moments… Clips appear here automatically.</span></div>`}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column: AI Analysis & Live Chat -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="live-feed-box">
+          <div class="live-feed-title">${ic("bolt")}Multimodal AI Fusion Status</div>
+          <div class="multimodal-grid">
+            <div class="multimodal-chip">
+              <span>LOUDNESS SPIKES</span>
+              <b>${s.spikes || 0} jumps detected</b>
+            </div>
+            <div class="multimodal-chip">
+              <span>LIVE CHAT</span>
+              <b>${s.chat_total || 0} messages</b>
+            </div>
+            <div class="multimodal-chip">
+              <span>MULTILINGUAL ASR</span>
+              <b>Hindi / Hinglish / En</b>
+            </div>
+            <div class="multimodal-chip">
+              <span>VISION AI</span>
+              <b>${s.facecam ? "Dual Split Active" : "Adaptive Frame Scan"}</b>
+            </div>
+          </div>
+          ${s.db && s.db.length ? `<div><span style="font-size:11px;color:var(--dim)">AUDIO INTENSITY (LAST MINUTE)</span>${spark(s.db, "", -55, -8)}</div>` : ""}
+        </div>
+        
+        <div class="live-feed-box">
+          <div class="live-feed-title">${ic("radio")}Live Real-Time Transcript</div>
+          <div class="live-transcript-feed" id="liveTransStream">
+            ${(s.lines || []).length ? s.lines.map((l, i) => `<div class="live-transcript-line"><span class="live-transcript-time">[${i + 1}]</span><span>${esc(l)}</span></div>`).join("") : `<div class="sub">Listening for streamer speech…</div>`}
+          </div>
+        </div>
+        
+        <div class="live-feed-box">
+          <div class="live-feed-title">${ic("chat")}Latest AI Decisions</div>
+          <div class="said" style="color:var(--text);font-size:12px">
+            ${(s.verdicts || []).length ? s.verdicts.slice(-3).map(v => `<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b>${fmt(v.t)}</b>: <span class="sub">${esc(v.result || "Evaluated")}</span></div>`).join("") : `<div class="sub">AI checking stream every minute…</div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  
+  liveStudioTimer = setInterval(async () => {
+    if (S.view !== "live-studio") { clearInterval(liveStudioTimer); return; }
+    try {
+      const fresh = await api("/api/live/sessions");
+      if (fresh.length) {
+        const cur = fresh[0];
+        const trBox = $("#liveTransStream");
+        if (trBox && cur.lines) {
+          trBox.innerHTML = cur.lines.map((l, i) => `<div class="live-transcript-line"><span class="live-transcript-time">[${i + 1}]</span><span>${esc(l)}</span></div>`).join("");
+        }
+      }
+    } catch {}
+  }, 4000);
+}
+
+async function startLiveMonitor() {
+  const url = $("#live_url_input")?.value.trim();
+  if (!url) return toast("Paste a YouTube, Twitch or Kick live link", "bad");
+  const btn = $("#live_start_btn");
+  if (btn) { btn.disabled = true; btn.textContent = "Connecting…"; }
+  try {
+    await send("/api/live/connect", {url});
+    toast("Live monitoring started 🚀", "ok");
+    await tick();
+    drawLiveStudio();
+  } catch (e) {
+    toast(e.message, "bad");
+    if (btn) { btn.disabled = false; btn.innerHTML = `${ic("bolt")}Start AI Monitor`; }
+  }
+}
+
+async function stopLiveMonitor(jid) {
+  if (!await ask("Stop monitoring this stream?", "Clipcut will finish any pending clips and wrap up recording.", "Stop")) return;
+  try {
+    await send(`/api/live/${jid}/stop`, {});
+    toast("Live stream stopped", "ok");
+    await tick();
+    drawLiveStudio();
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function manualLiveClip(seconds) {
+  const sessions = await api("/api/live/sessions").catch(() => []);
+  if (!sessions.length) return toast("No active live stream recording right now.", "bad");
+  const jid = sessions[0].id;
+  try {
+    await send(`/api/live/${jid}/clip`, {seconds});
+    toast(`Preparing ${seconds}s short from live buffer!`, "ok");
+    await tick();
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+/* ============================================================ Approval Center */
+async function drawApprovalCenter() {
+  const root = $("#approvalSlot"); if (!root) return;
+  root.innerHTML = `<div class="set-load">Loading approval queue…</div>`;
+  let items = [];
+  try { items = await api("/api/approval/queue"); S.approvalQueue = items; } catch (e) { items = []; }
+  
+  if (!items.length) {
+    root.innerHTML = `<div class="approval-header">
+      <div>
+        <h2 style="font-size:22px;font-weight:700;color:#fff">Approval Center</h2>
+        <p class="sub">Human approval is required before clips are published.</p>
+      </div>
+      <button class="btn sm" onclick="drawApprovalCenter()">${ic("check")}Refresh Queue</button>
+    </div>
+    <div class="empty" style="padding:60px 20px">
+      <img src="/brand/favicon.svg" alt="" style="width:64px;height:64px;margin-bottom:14px">
+      <b style="font-size:16px">All caught up! Zero clips pending approval.</b>
+      <span class="sub" style="max-width:440px;margin-top:6px">Clips generated from your video library or active live streams will appear here for review, viral SEO refinement, and multi-platform publishing.</span>
+      <div class="row" style="margin-top:20px">
+        <button class="btn primary" data-act="go" data-v="live-studio">${ic("radio")}Open Live Studio</button>
+        <button class="btn" data-act="go" data-v="overview">${ic("scissors")}Clip a Video</button>
+      </div>
+    </div>`;
+    return;
+  }
+  
+  root.innerHTML = `<div class="approval-header">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2 style="font-size:22px;font-weight:700;color:#fff">Approval Center</h2>
+        <span class="pill ok" style="background:#F43F5E;color:#fff">${items.length} Pending Review</span>
+      </div>
+      <p class="sub">Review 9:16 vertical shorts, customize Hinglish viral SEO, and publish directly to connected platforms.</p>
+    </div>
+    <div class="row">
+      <button class="btn sm primary" onclick="approveAllPending()">${ic("check")}Approve All (${items.length})</button>
+      <button class="btn sm ghost" onclick="drawApprovalCenter()">↻ Refresh</button>
+    </div>
+  </div>
+  
+  <div class="approval-grid">
+    ${items.map(it => {
+      const m = it.meta || {};
+      const job = jobOf(it.job_id);
+      const clip = job?.clips?.find(c => c.id === it.clip_id);
+      const videoSrc = (job && clip?.file) ? `/media/${job.id}/${clip.file}` : "";
+      const coverSrc = (job && clip?.cover) ? `/media/${job.id}/${clip.cover}` : "";
+      const dur = m.duration ? fmt(m.duration) : "0:30";
+      const score = m.score || clip?.score || 85;
+      const targetPlats = it.platforms || ["youtube", "instagram", "tiktok", "facebook"];
+      
+      return `<article class="approval-card" id="appr_${esc(it.id)}">
+        <div class="approval-preview">
+          ${videoSrc ? `<video src="${videoSrc}" poster="${coverSrc}" controls preload="metadata" playsinline></video>`
+                     : coverSrc ? `<img src="${coverSrc}" alt="">` : `<span class="sub">Preview ready after render</span>`}
+          <span class="approval-score-badge">🔥 ${score} AI Virality</span>
+          <span class="approval-dur-badge">${dur}</span>
+        </div>
+        
+        <div class="approval-body">
+          <div class="approval-field">
+            <label>Viral Title (High CTR & #Shorts)</label>
+            <input id="appr_ttl_${esc(it.id)}" value="${esc(m.title || "")}" placeholder="Hinglish / English title…">
+          </div>
+          
+          <div class="approval-field">
+            <label>Big Video Hook Text</label>
+            <input id="appr_hook_${esc(it.id)}" value="${esc(m.hook || "")}" placeholder="Punchy Hook…">
+          </div>
+          
+          <div class="approval-field">
+            <label>Description & Call-to-Action</label>
+            <textarea id="appr_desc_${esc(it.id)}" rows="2">${esc(m.description || "")}</textarea>
+          </div>
+          
+          <div class="approval-field">
+            <label>Hashtags</label>
+            <input id="appr_ht_${esc(it.id)}" value="${esc((m.hashtags || []).map(h=>'#'+h.replace(/^#/,'')).join(' '))}">
+          </div>
+          
+          <div class="approval-field">
+            <label>Target Social Platforms</label>
+            <div class="approval-platforms">
+              <label class="approval-plat-label"><input type="checkbox" data-pf="youtube" ${targetPlats.includes("youtube") ? "checked" : ""}> YouTube Shorts</label>
+              <label class="approval-plat-label"><input type="checkbox" data-pf="instagram" ${targetPlats.includes("instagram") ? "checked" : ""}> Instagram Reels</label>
+              <label class="approval-plat-label"><input type="checkbox" data-pf="tiktok" ${targetPlats.includes("tiktok") ? "checked" : ""}> TikTok</label>
+              <label class="approval-plat-label"><input type="checkbox" data-pf="facebook" ${targetPlats.includes("facebook") ? "checked" : ""}> Facebook Reels</label>
+            </div>
+          </div>
+          
+          <div class="approval-actions">
+            <button class="btn danger sm" onclick="submitReject('${esc(it.id)}')">${ic("x")}Reject</button>
+            <button class="btn primary sm" onclick="submitApprove('${esc(it.id)}')">${ic("check")}Approve & Publish</button>
+          </div>
+        </div>
+      </article>`;
+    }).join("")}
+  </div>`;
+}
+
+async function submitApprove(itemId) {
+  const card = $(`#appr_${itemId}`); if (!card) return;
+  const title = $(`#appr_ttl_${itemId}`)?.value.trim() || "";
+  const hook = $(`#appr_hook_${itemId}`)?.value.trim() || "";
+  const description = $(`#appr_desc_${itemId}`)?.value.trim() || "";
+  const htStr = $(`#appr_ht_${itemId}`)?.value.trim() || "";
+  const hashtags = htStr.split(/\s+/).filter(Boolean).map(h => h.replace(/^#/, ""));
+  
+  const platforms = [];
+  card.querySelectorAll("input[data-pf]:checked").forEach(cb => platforms.push(cb.dataset.pf));
+  
+  try {
+    await send(`/api/approval/${itemId}/approve`, {
+      platforms,
+      meta: {title, hook, description, hashtags}
+    });
+    toast("Clip approved and scheduled for publishing! 🚀", "ok");
+    card.style.opacity = "0.4";
+    card.style.pointerEvents = "none";
+    setTimeout(() => { card.remove(); tick(); }, 400);
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function submitReject(itemId) {
+  if (!await ask("Reject this clip?", "This clip will be dismissed from the approval queue and won't be posted.", "Reject", true)) return;
+  const card = $(`#appr_${itemId}`);
+  try {
+    await send(`/api/approval/${itemId}/reject`, {reason: "User rejected in Approval Center"});
+    toast("Clip rejected", "ok");
+    card.style.opacity = "0.4";
+    card.style.pointerEvents = "none";
+    setTimeout(() => { card.remove(); tick(); }, 400);
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function approveAllPending() {
+  if (!await ask("Approve all pending clips?", "Every pending clip will be approved and queued for publication on its selected platforms.", "Approve all")) return;
+  const items = S.approvalQueue || [];
+  let ok = 0;
+  for (const it of items) {
+    try {
+      await send(`/api/approval/${it.id}/approve`, {platforms: it.platforms || ["youtube","instagram","tiktok","facebook"], meta: it.meta || {}});
+      ok++;
+    } catch {}
+  }
+  toast(`Approved ${ok} clips! 🚀`, "ok");
+  await tick();
+  drawApprovalCenter();
+}
+
+/* ============================================================ Publishing History */
+async function drawPubHistory() {
+  const root = $("#pubHistorySlot"); if (!root) return;
+  root.innerHTML = `<div class="set-load">Loading publishing history…</div>`;
+  let posts = [];
+  try { posts = await api("/api/posts/history"); } catch { posts = []; }
+  
+  root.innerHTML = `<div class="approval-header">
+    <div>
+      <h2 style="font-size:22px;font-weight:700;color:#fff">Publishing History</h2>
+      <p class="sub">Track posted, scheduled and failed Shorts and Reels across all social channels.</p>
+    </div>
+    <div class="row">
+      <button class="btn sm" onclick="drawPubHistory()">↻ Refresh</button>
+    </div>
+  </div>
+  
+  ${!posts.length ? `<div class="empty"><img src="/brand/favicon.svg" alt=""><b>No posts yet</b><span class="sub">Approved clips that get scheduled and published will show up here.</span></div>` : `
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Clip & Title</th>
+          <th>Platform</th>
+          <th>Account</th>
+          <th>Scheduled / Posted</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${posts.map(p => {
+          const cls = p.status === "posted" ? "ok" : p.status === "failed" ? "bad" : "warn";
+          const platBadge = p.platform === "youtube" ? `<span class="pill" style="background:#FF0000;color:#fff">YouTube</span>`
+                          : p.platform === "instagram" ? `<span class="pill" style="background:#E1306C;color:#fff">Instagram</span>`
+                          : p.platform === "facebook" ? `<span class="pill" style="background:#1877F2;color:#fff">Facebook</span>`
+                          : `<span class="pill" style="background:#000;color:#fff">TikTok</span>`;
+          const timeStr = p.posted_at ? when(p.posted_at) : p.due_at ? `Scheduled: ${when(p.due_at)}` : when(p.created);
+          return `<tr>
+            <td>
+              <b style="color:#fff;display:block;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title || "Clip")}</b>
+              <span class="sub">ID: ${esc(p.id)}</span>
+            </td>
+            <td>${platBadge}</td>
+            <td><b>${esc(p.account_name || "Social Account")}</b></td>
+            <td class="sub">${timeStr}</td>
+            <td><span class="pill ${cls}">${esc(p.status)}</span></td>
+            <td>
+              ${p.url ? `<a class="btn sm primary" href="${esc(p.url)}" target="_blank" rel="noopener">View ${ic("upright")}</a>` : ""}
+            </td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+  </div>`}`;
+}
+
 /* ============================================================ creator pages */
 function costHint(every) {
   every = Number(every) || 3;
@@ -2154,6 +2612,7 @@ async function drawSettings() {
       const yt = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>';
       const ig = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23a3.7 3.7 0 0 1-.9 1.38c-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zM12 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zm0 10.16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>';
       const tt = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.3 0 .59.04.86.13v-3.5a6.37 6.37 0 0 0-.86-.05A6.34 6.34 0 0 0 3.15 15.7a6.34 6.34 0 0 0 10.86 4.43 6.3 6.3 0 0 0 1.81-4.43V8.73a8.2 8.2 0 0 0 4.77 1.52V6.8a4.85 4.85 0 0 1-1-.11z"/></svg>';
+      const fb = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>';
       const ok = S.status.connect || {}, admin = me.is_admin;
       const setup = admin ? await api("/api/apps").catch(() => null) : null;
       const GUIDE = {
@@ -2165,6 +2624,11 @@ async function drawSettings() {
           ["Create a <b>Business</b> app and add <b>Instagram</b> (API setup with Instagram login).",
            "Under <b>Business login settings</b>, add the address below as a redirect URL.", "Paste the <b>Instagram app ID</b> and <b>Instagram app secret</b> here."],
           "Works with Creator and Business Instagram accounts. Until Meta reviews your app, only accounts you add as testers can connect."],
+        facebook: ["https://developers.facebook.com/apps", "Meta for Developers",
+          ["Create a <b>Business</b> app and configure <b>Facebook Login</b>.",
+           "Generate a Page Access Token with <b>pages_manage_posts</b> permission.",
+           "Paste the Page Access Token below for instant posting."],
+          "Posts Reels directly to any Facebook Page you manage."],
         tiktok: ["https://developers.tiktok.com/apps", "TikTok for Developers",
           ["Create an app and add <b>Login Kit</b> and <b>Content Posting API</b> with Direct Post turned on.",
            "Add the address below as a redirect URI, with the scopes <b>user.info.basic</b> and <b>video.publish</b>.", "Paste the Client key and Client secret here."],
@@ -2186,6 +2650,9 @@ async function drawSettings() {
             ${pf === "instagram" ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)"><p class="sub"><b>Or connect directly with an Instagram Access Token:</b></p>
             <div class="fields"><label class="f">Instagram Access Token<input id="ig_token_input" placeholder="EAAB... (Paste token here)" autocomplete="off"></label></div>
             <div class="row"><button class="btn sm" type="button" data-act="ig_tokensave">Connect with Token</button></div></div>` : ""}
+            ${pf === "facebook" ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)"><p class="sub"><b>Connect directly with a Facebook Page Access Token:</b></p>
+            <div class="fields"><label class="f">Facebook Page Token<input id="fb_token_input" placeholder="EAAB... (Paste token here)" autocomplete="off"></label></div>
+            <div class="row"><button class="btn sm" type="button" data-act="fb_tokensave">Connect Facebook Page</button></div></div>` : ""}
           </div>` : "";
         return `<div class="appcard"><span class="applogo" style="background:${bg}">${logo}</span>
           <div class="apptx"><b>${name}</b><span>${desc}</span>${listOf(accs)}</div><div class="appact">${act}</div>${panel}</div>`;
@@ -2194,6 +2661,7 @@ async function drawSettings() {
         <div class="apps">
           ${card("youtube", "YouTube", yt, "#FF0000", "Post clips to your channel as Shorts.")}
           ${card("instagram", "Instagram", ig, "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", "Post clips as Reels. Needs a Creator or Business account.")}
+          ${card("facebook", "Facebook Reels", fb, "#1877F2", "Post clips directly to Facebook Pages as Reels.")}
           ${card("tiktok", "TikTok", tt, "#000", "Post clips straight to your TikTok.")}
         </div></section>`;
     }
@@ -2286,16 +2754,21 @@ $("#clipdlg").addEventListener("click", e => { if (e.target === e.currentTarget)
 function render() {
   drawShell(); drawJobs(); drawStream(); drawSelBar();
   if (S.view === "overview") drawOverview();
+  if (S.view === "live-studio") drawLiveStudio();
+  if (S.view === "approval") drawApprovalCenter();
+  if (S.view === "pub-history") drawPubHistory();
   if ($("#clog")) drawLog();
   if (D.jid) drawClipDlg(false);
 }
 async function tick() {
   try {
+    try { S.approvalQueue = await api("/api/approval/queue"); } catch {}
     const got = await api("/api/sync?v=" + encodeURIComponent(S.syncV || ""));
     const fresh = !!got.jobs, stale = Date.now() - (S.ovAt || 0) > 20000;
     S.syncV = got.v;
     if (!fresh) {                                   // nothing of ours changed on the server
       if (S.view === "overview" && stale) { S.overview = await api("/api/overview"); S.ovAt = Date.now(); render(); }
+      drawShell();
       return;
     }
     const {jobs, creators, accounts} = got;
@@ -2604,6 +3077,17 @@ document.addEventListener("click", async e => {
         S.status = await api("/api/status");
         await tick();
         toast("Connected Instagram: " + r.account.name, "ok");
+        return drawSettings();
+      } catch (err) { return toast(err.message, "bad"); }
+    }
+    if (a === "fb_tokensave") {
+      const token = $("#fb_token_input")?.value?.trim();
+      if (!token) return toast("Please paste a Facebook Page Access Token", "bad");
+      try {
+        const r = await send("/api/accounts/facebook/token", {token});
+        S.status = await api("/api/status");
+        await tick();
+        toast("Connected Facebook: " + r.account.name, "ok");
         return drawSettings();
       } catch (err) { return toast(err.message, "bad"); }
     }
