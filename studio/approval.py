@@ -132,6 +132,7 @@ def reject(uid: str, item_id: str, reason: str = "") -> dict:
         item["status"] = "rejected"
         item["rejected_at"] = time.time()
         item["reason"] = reason
+        item["rejection_reason"] = reason
         p = _queue_path(uid) / f"{item_id}.json"
         p.write_text(json.dumps(item, indent=2), encoding="utf-8")
     return item

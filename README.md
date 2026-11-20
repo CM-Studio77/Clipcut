@@ -182,6 +182,43 @@ Access the studio at `http://localhost:8765`.
 
 ---
 
+## 🔴 Autonomous AI Live Stream Platform & Live Studio
+
+ClipCut includes a complete autonomous live stream understanding and clipping system:
+
+### 1. 📺 Live Studio Workspace
+- **Real-Time Stream Monitoring**: Connect live YouTube, Twitch, Kick, or RTMP/SRT streams with instant embedding and playback.
+- **Live Multilingual Transcript**: Streaming speech-to-text with word-level timestamps and Hinglish support.
+- **Audio & Chat Signals**: Live audio intensity (dB meter) and chat spike velocity telemetry.
+- **Highlight Verdict Timeline**: Visual timeline indicating viral moments as they occur.
+- **Manual Buffer Clipping**: Instant 30s, 60s, and 90s highlight capture from the rolling live recording buffer.
+
+### 2. 🧠 Multimodal AI Context Fusion Engine (`studio/context.py` & `studio/vision.py`)
+- **Video Intelligence**: FFmpeg keyframe extraction with Gemini Vision analysis (identifying laughing, rage, shock, and clutch gameplay).
+- **Audio Intelligence**: RMS loudness intensity and vocal excitement tracking.
+- **Chat Intelligence**: Velocity spikes, repeated viewer emojis, and audience laughter analysis.
+- **Synergistic Boost**: Composite virality scoring (0–100) with a synergistic boost (+12 points) when 3 or more modalities trigger simultaneously.
+
+### 3. 🛡️ Creator Approval Center (`studio/approval.py`)
+- **Strict Human Approval**: Every generated clip enters a dedicated review queue; no autonomous blind posting.
+- **Hinglish SEO Suite**: Review and edit viral titles, hooks, descriptions, and hashtags before release.
+- **Platform Selectors**: Choose publishing destinations individually: YouTube Shorts, Instagram Reels, TikTok, and Facebook Reels.
+- **Audit Ledger**: Comprehensive publishing and rejection history.
+
+### 4. 📲 Social Platform Adapters (`studio/accounts.py` & `studio/posting.py`)
+- **YouTube Shorts**: Official YouTube Data API v3 resumable video upload.
+- **Instagram Reels**: Direct Access Token & Meta Graph API container-based Reels publishing.
+- **Facebook Reels**: Direct Page Access Token & Meta Graph API resumable Reel upload.
+- **TikTok**: TikTok Content Posting API integration.
+
+### 5. 🧪 Automated Test Suite
+Run the comprehensive autonomous system test suite:
+```bash
+python tests/test_live_autonomous_system.py
+```
+
+---
+
 ## 📡 API Endpoints
 
 | Method | Endpoint | Description |
