@@ -80,7 +80,7 @@ def _next_slot(account_id, gap_min, cap):
     return t
 
 
-def enqueue(job, clip, account_ids, now=False) -> list:
+def enqueue(job, clip, account_ids, now=False, schedule_at: float = None) -> list:
     c = creators.get(job["creator"]) or creators.DEFAULTS
     made = []
     with _lock:
@@ -91,7 +91,12 @@ def enqueue(job, clip, account_ids, now=False) -> list:
             if any(p["job"] == job["id"] and p["clip"] == clip["id"] and p["account"] == aid
                    and p["status"] in OPEN + ("posted",) for p in _mine()):
                 continue  # never post the same clip to the same account twice
-            due = time.time() if now else _next_slot(aid, c["post_gap_min"], c["daily_cap"])
+            if schedule_at and float(schedule_at) > time.time():
+                due = float(schedule_at)
+            elif now:
+                due = time.time()
+            else:
+                due = _next_slot(aid, c["post_gap_min"], c["daily_cap"])
             p = {"id": secrets.token_hex(8), "user": ctx.uid(), "job": job["id"], "clip": clip["id"], "creator": job["creator"],
                  "account": aid, "account_name": acc["name"], "platform": acc["platform"], "status": "scheduled",
                  "due_at": due, "created": time.time(), "title": clip.get("title") or clip.get("hook") or "Clip",
@@ -128,9 +133,63 @@ def on_clip_ready(job, clip):
         creators.log(c["id"], f"Queued for {len(made)} account(s): {clip.get('title') or clip.get('hook')}")
 
 
-def _caption(clip, creator):
-    tags = " ".join("#" + h for h in clip.get("hashtags", []))
-    return "\n\n".join(x for x in (clip.get("description", ""), tags, creator.get("post_footer", "")) if x)
+def _format_youtube_caption(clip, creator):
+    desc = clip.get("description") or ""
+    hook = clip.get("hook") or ""
+    tags = clip.get("hashtags") or []
+    parts = []
+    if hook:
+        parts.append(f"🔥 {hook}")
+    if desc:
+        parts.append(desc)
+    parts.append("━━━━━━━━━━━━━━━━━━━━━")
+    parts.append("🎬 Full live stream highlight extracted with ClipCut AI.")
+    parts.append("🔔 Subscribe & turn on notifications for daily viral clips!")
+    parts.append("━━━━━━━━━━━━━━━━━━━━━")
+    ht_line = " ".join("#" + h.lstrip("#") for h in tags)
+    if "#Shorts" not in ht_line and "#shorts" not in ht_line:
+        ht_line += " #Shorts #YouTubeShorts #Viral #Trending"
+    parts.append(ht_line)
+    if creator.get("post_footer"):
+        parts.append(creator["post_footer"])
+    return "\n\n".join(parts)
+
+
+def _format_instagram_caption(clip, creator):
+    title = clip.get("title") or clip.get("hook") or "Viral Reel"
+    desc = clip.get("description") or ""
+    tags = clip.get("hashtags") or []
+    parts = [f"{title} 😱👇"]
+    if desc:
+        parts.append(desc)
+    parts.append(".\n.\n💬 Konsa part sabse best laga? Comment mein batao! 👇\n👉 Follow for daily viral clips & reels!\n.\n.")
+    base_tags = [h.lstrip("#") for h in tags]
+    ig_viral = ["reels", "reelsinstagram", "viralreels", "trendingreels", "explorepage", "instareels", "funnyreels", "gamingreels", "foryou", "explore", "trending"]
+    all_tags = list(dict.fromkeys(base_tags + ig_viral))[:28]
+    parts.append(" ".join("#" + t for t in all_tags))
+    if creator.get("post_footer"):
+        parts.append(creator["post_footer"])
+    return "\n".join(parts)
+
+
+def _format_tiktok_caption(clip, creator):
+    hook = clip.get("hook") or clip.get("title") or "Must watch"
+    tags = clip.get("hashtags") or []
+    tt_tags = list(dict.fromkeys([h.lstrip("#") for h in tags] + ["fyp", "foryou", "viral", "trending"]))[:6]
+    ht_str = " ".join("#" + t for t in tt_tags)
+    return f"{hook} 💀🔥 {ht_str}"[:200]
+
+
+def _format_facebook_caption(clip, creator):
+    title = clip.get("title") or clip.get("hook") or "Must Watch Clip"
+    desc = clip.get("description") or ""
+    parts = [title]
+    if desc:
+        parts.append(desc)
+    parts.append("Watch till the end! Like and Follow our page for daily viral moments! 🎬")
+    if creator.get("post_footer"):
+        parts.append(creator["post_footer"])
+    return "\n\n".join(parts)
 
 
 def _post(p):
@@ -144,18 +203,26 @@ def _post(p):
             raise RuntimeError("That account was disconnected.")
         path = Path(job["dir"]) / "clips" / clip["file"]
         creator = creators.get(job["creator"]) or dict(creators.DEFAULTS, name="clips")
-        title, cap = clip.get("title") or clip.get("hook") or "Clip", _caption(clip, creator)
+        title = clip.get("title") or clip.get("hook") or "Clip"
+        
         if acc["platform"] == "youtube":
             yt_tags = clip.get("tags") or [h.lstrip("#") for h in clip.get("hashtags", [])]
             if "#Shorts" not in title and "#shorts" not in title and len(title) <= 90:
                 title = f"{title} #Shorts"
-            rid, url = accounts.youtube_upload(acc, path, title, cap + "\n\n#Shorts", yt_tags, creator["privacy"])
+            yt_cap = _format_youtube_caption(clip, creator)
+            rid, url = accounts.youtube_upload(acc, path, title, yt_cap, yt_tags, creator["privacy"])
+            accounts.youtube_post_comment(acc, rid, "🔴 Full stream replay on channel! Drop a like & subscribe for daily viral highlights! 👇🔥")
         elif acc["platform"] == "instagram":
-            rid, url = accounts.instagram_upload(acc, path, f"{title}\n\n{cap}", job["id"])
+            ig_cap = _format_instagram_caption(clip, creator)
+            rid, url = accounts.instagram_upload(acc, path, ig_cap, job["id"])
+            if rid:
+                accounts.instagram_post_comment(acc, rid, "Tag a friend who needs to see this! 😂 Drop a ❤️ if you loved it!")
         elif acc["platform"] == "tiktok":
-            rid, url = accounts.tiktok_upload(acc, path, f"{title}\n\n{cap}", creator["privacy"])
+            tt_cap = _format_tiktok_caption(clip, creator)
+            rid, url = accounts.tiktok_upload(acc, path, tt_cap, creator["privacy"])
         elif acc["platform"] == "facebook":
-            rid, url = accounts.facebook_upload(acc, path, title, cap, job["id"])
+            fb_cap = _format_facebook_caption(clip, creator)
+            rid, url = accounts.facebook_upload(acc, path, title, fb_cap, job["id"])
         else:
             raise RuntimeError("That kind of account is no longer supported.")
         p.update(status="posted", posted_at=time.time(), remote_id=rid, url=url, error=None)
@@ -168,6 +235,9 @@ def _post(p):
         else:
             p["status"] = "failed"
             creators.log(p["creator"], f"Post failed on {p['account_name']}: {p['error']}")
+            alerts.notify(f"post failed on {p['account_name']} ({p['title']}): {p['error'][:200]}", kind="post")
+    _save()
+    _mirror(p)
             alerts.notify(f"post failed on {p['account_name']} ({p['title']}): {p['error'][:200]}", kind="post")
     _save()
     _mirror(p)

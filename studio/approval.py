@@ -153,7 +153,10 @@ def approve(uid: str, item_id: str, platforms: list = None, meta: dict = None) -
                     chosen_aids.append(acc["id"])
                     
             if chosen_aids:
-                posting.enqueue(job, clip, chosen_aids, now=True)
+                schedule_mode = (meta or {}).get("schedule_mode", "now")
+                schedule_at = (meta or {}).get("schedule_at")
+                now = schedule_mode == "now"
+                posting.enqueue(job, clip, chosen_aids, now=now, schedule_at=schedule_at)
 
     return item
 

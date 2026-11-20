@@ -665,3 +665,46 @@ def facebook_upload(acc, path: Path, title: str, description: str, job_id: str =
             vid = direct.get("id", "")
             return vid, f"https://www.facebook.com/video/{vid}"
 
+
+def youtube_post_comment(acc, video_id: str, text: str):
+    """Post an engagement-boosting top-level comment on a YouTube Short."""
+    if not video_id or not text:
+        return
+    try:
+        token = _yt_token(acc)
+        body = {
+            "snippet": {
+                "videoId": str(video_id),
+                "topLevelComment": {
+                    "snippet": {
+                        "textOriginal": str(text)
+                    }
+                }
+            }
+        }
+        httpx.post(
+            "https://www.googleapis.com/youtube/v3/commentThreads",
+            params={"part": "snippet"},
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=15
+        )
+    except Exception:
+        pass
+
+
+def instagram_post_comment(acc, media_id: str, text: str):
+    """Post an auto-comment on an Instagram Reel."""
+    if not media_id or not text:
+        return
+    try:
+        token = _ig_token(acc)
+        httpx.post(
+            f"{IG}/{media_id}/comments",
+            data={"message": str(text), "access_token": token},
+            timeout=15
+        )
+    except Exception:
+        pass
+
+
