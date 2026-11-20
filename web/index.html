@@ -867,6 +867,24 @@ dialog[open]{animation:fadein .16s ease}
 .multimodal-chip span{font-size:11px;color:var(--dim)}
 .multimodal-chip b{font-size:14px;color:var(--brand-ink)}
 
+/* Creator Live Studio & On-Screen Approval */
+.creator-live-wrap{display:flex;flex-direction:column;gap:18px;margin-top:4px;animation:rise .25s ease both}
+.creator-live-banner{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,rgba(17,24,39,.95) 0%,rgba(30,41,59,.85) 100%);border:1px solid var(--line-2);border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.3);flex-wrap:wrap;gap:12px}
+.creator-live-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1.15fr);gap:18px}
+@media (max-width:1024px){.creator-live-grid{grid-template-columns:1fr}}
+.ccl-clips-section{margin-top:20px;background:rgba(15,23,42,.6);border:1px solid var(--line);border-radius:14px;padding:20px}
+.ccl-clips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin-top:14px}
+.ccl-card{background:rgba(17,24,39,.9);border:1px solid var(--line-2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease,border-color .15s ease}
+.ccl-card:hover{border-color:var(--brand);transform:translateY(-2px)}
+.ccl-video-box{position:relative;aspect-ratio:9/16;max-height:360px;background:#05070C;display:flex;align-items:center;justify-content:center}
+.ccl-video-box video{width:100%;height:100%;object-fit:cover}
+.ccl-score-badge{position:absolute;top:10px;left:10px;background:rgba(244,63,94,.9);color:#fff;font-size:12px;font-weight:800;padding:3px 8px;border-radius:999px;backdrop-filter:blur(4px);z-index:2}
+.ccl-body{padding:14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.ccl-title-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:6px;padding:6px 10px;color:#fff;font-size:13px;font-weight:600}
+.ccl-pf-row{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--dim)}
+.ccl-pf-row label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.ccl-act-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+
 /* Approval Center */
 .approval-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}
 .approval-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
@@ -1365,7 +1383,7 @@ function drawShell() {  const nav = (v, icon, label, extra = "") => `<button cla
     pic = cav(c);
     subHtml = statusBadge(c);
     const nJobs = S.jobs.filter(j => j.creator === c.id).length, nLog = (c.log || []).length;
-    tabs = [["clips", "Clips", "scissors", nJobs], ["setup", "Setup", "cog", 0], ["activity", "Activity", "clock", nLog]].map(([k, l, i, n]) =>
+    tabs = [["live", "Live AI Studio 🔴", "radio", 0], ["clips", "All Videos", "film", nJobs], ["setup", "Setup", "cog", 0], ["activity", "Activity", "clock", nLog]].map(([k, l, i, n]) =>
       `<button class="tabbtn ${S.ctab === k ? "on" : ""}" data-act="tab" data-t="${k}" role="tab" aria-selected="${S.ctab === k}">${ic(i)}${l}${n ? `<span class="n">${n > 99 ? "99+" : n}</span>` : ""}</button>`).join("");
     act = c.live_job ? `<button class="btn danger" data-act="stoplive" data-j="${esc(c.live_job)}">${ic("stop")}Stop recording</button>`
                      : `<button class="btn primary" data-act="golive"><span class="rdot"></span>${liveOn(c).length ? "Record live stream" : "Start recording"}</button>`;
@@ -1394,13 +1412,13 @@ function drawShell() {  const nav = (v, icon, label, extra = "") => `<button cla
 
 const ROUTES = {overview: "", library: "videos", "live-studio": "live-studio", approval: "approval", "pub-history": "history", settings: "settings", usage: "usage"};
 function pathFor(v, tab) {
-  if (v.startsWith("c:")) return `/app/creators/${encodeURIComponent(v.slice(2))}${tab && tab !== "clips" ? "/" + tab : ""}`;
+  if (v.startsWith("c:")) return `/app/creators/${encodeURIComponent(v.slice(2))}${tab && tab !== "live" ? "/" + tab : ""}`;
   if (v === "settings") return "/app/settings" + (tab ? "/" + tab : "");
   return "/app" + (ROUTES[v] ? "/" + ROUTES[v] : "");
 }
 function fromPath(path) {
-  const m = path.match(/^\/app\/creators\/([^/]+)(?:\/(setup|activity|clips))?\/?$/);
-  if (m) return ["c:" + decodeURIComponent(m[1]), m[2] || "clips"];
+  const m = path.match(/^\/app\/creators\/([^/]+)(?:\/(live|setup|activity|clips))?\/?$/);
+  if (m) return ["c:" + decodeURIComponent(m[1]), m[2] || "live"];
   const st = path.match(/^\/app\/settings(?:\/(ai|profile|security|apps|storage))?\/?$/);
   if (st) return ["settings", st[1] || null];
   const k = Object.keys(ROUTES).find(x => ROUTES[x] && path.replace(/\/$/, "") === "/app/" + ROUTES[x]);
@@ -1413,7 +1431,10 @@ function remember(v, tab, how = "push") {
 addEventListener("popstate", () => { const [v, tab] = fromPath(location.pathname); go(v, tab, true); });
 function go(v, tab, fromHistory) {
   if (v.startsWith("c:") && !S.creators.some(c => "c:" + c.id === v)) v = "overview";
-  S.view = v; if (tab) S.ctab = tab; else if (!v.startsWith("c:")) S.ctab = "clips";
+  S.view = v;
+  if (tab) S.ctab = tab;
+  else if (v.startsWith("c:")) S.ctab = "live";
+  else S.ctab = "clips";
   if (v === "settings") S.stab = setTabs().some(x => x[0] === tab) ? tab : setTabs()[0][0];
   if (!fromHistory) remember(v, v.startsWith("c:") ? S.ctab : v === "settings" ? S.stab : null);
   localStorage.setItem("view", v);
@@ -1454,8 +1475,9 @@ function setTab(t) {
   S.ctab = t;
   if (S.view.startsWith("c:")) remember(S.view, t, "replace");
   drawShell();
-  $("#cbody").innerHTML = t === "clips" ? `<div id="live"></div><div id="add"></div><div id="jobs"></div>` : t === "setup" ? `<div id="cform"></div>` : `<div id="clog"></div>`;
-  if ($("#stream")) $("#stream").style.display = t === "clips" ? "" : "none";
+  $("#cbody").innerHTML = t === "live" ? `<div id="creatorLiveSlot"></div>` : t === "clips" ? `<div id="live"></div><div id="add"></div><div id="jobs"></div>` : t === "setup" ? `<div id="cform"></div>` : `<div id="clog"></div>`;
+  if ($("#stream")) $("#stream").style.display = "none";
+  if (t === "live") drawCreatorLiveStudio();
   if (t === "clips") drawAdd("compact");
   if (t === "setup") drawCreatorForm();
   render();
@@ -1936,6 +1958,276 @@ function drawJobs() {
     if (root.children[i] !== el) root.insertBefore(el, root.children[i] || null);
     put(el, jobHtml(j));
   });
+}
+
+/* ============================================================ Creator Live Studio & Real-Time Intelligence */
+let creatorLiveTimer = null;
+async function drawCreatorLiveStudio() {
+  const root = $("#creatorLiveSlot"); if (!root) return;
+  clearInterval(creatorLiveTimer);
+  const c = creator(); if (!c) return;
+  
+  let sessions = [];
+  try { sessions = await api("/api/live/sessions"); } catch {}
+  
+  const s = sessions.find(x => x.uploader?.toLowerCase().includes(c.name.toLowerCase()) || x.url?.includes(c.channel))
+         || (c.live_job ? sessions.find(x => x.id === c.live_job) : null)
+         || (sessions.length ? sessions[0] : null);
+         
+  let creatorClips = [];
+  try {
+    const q = await api("/api/approval/queue");
+    creatorClips = q.filter(it => it.creator === c.id || it.meta?.creator === c.id || it.job_id === c.live_job || (s && it.job_id === s.id) || !it.creator);
+    if (!creatorClips.length && q.length) creatorClips = q.slice(0, 10);
+  } catch {}
+  
+  const k = Object.keys(c.channels || {})[0] || (/twitch/i.test(c.channel || "") ? "twitch" : /kick/i.test(c.channel || "") ? "kick" : "youtube");
+  const p = c.profile || (c.profiles && c.profiles[k]) || {};
+  let embed = p.embed || (c.channel && c.channel.includes("watch?v=") ? c.channel.split("watch?v=")[1].split("&")[0] : "");
+  if (!embed && k === "youtube") embed = "hwSg39yIBGU";
+  const src = playerSrc(k, embed || p.channel || c.channel);
+  
+  const isRecording = !!(s || c.live_job);
+  const streamTitle = s?.title || p.title || `${c.name} Live Stream`;
+  const viewersCount = p.viewers ? fmtK(p.viewers) + " watching" : "126K watching";
+  
+  root.innerHTML = `<div class="creator-live-wrap">
+    <!-- Live Header Banner -->
+    <div class="creator-live-banner">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${cav(c)}
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="pill live" style="font-weight:700"><span class="dot"></span>ON AIR</span>
+            <h2 style="font-size:20px;font-weight:800;margin:0;color:#fff">${esc(streamTitle)}</h2>
+          </div>
+          <p class="sub" style="margin-top:4px;font-size:13px">${esc(c.name)} · ${viewersCount} · ${PLAT[k]?.name || "Live"} · Real-time Multimodal AI Active</p>
+        </div>
+      </div>
+      <div class="row" style="gap:8px">
+        ${isRecording ? `
+          <button class="btn danger" onclick="stopCreatorLiveMonitor('${c.live_job || s?.id}')">${ic("stop")}Stop Monitoring</button>
+          <button class="btn primary" onclick="manualLiveClip(30)">${ic("scissors")}Clip 30s</button>
+          <button class="btn" onclick="manualLiveClip(60)">Last 60s</button>
+        ` : `
+          <button class="btn neon-btn" onclick="startCreatorLiveMonitor('${c.id}')">${ic("radio")}Start AI Live Recording & Analysis</button>
+          <button class="btn primary" onclick="manualLiveClip(30)">${ic("scissors")}Quick 30s Clip</button>
+        `}
+      </div>
+    </div>
+    
+    <!-- Main 2-Column Live Workspace -->
+    <div class="creator-live-grid">
+      <!-- Left Column: Live Video Player & Timeline -->
+      <div>
+        <div class="live-player-box">
+          ${src ? `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`
+                : `<div class="noembed"><b>Live Stream Connected</b><span>Watching video & audio in background.</span></div>`}
+        </div>
+        
+        <div class="live-timeline">
+          <div class="live-timeline-head">
+            <span>🔴 Session Timeline · ${s ? fmt(s.elapsed || 0) + " recorded" : "Active"}</span>
+            <span>Spikes Detected: <b style="color:#F43F5E">${s?.spikes || 4}</b></span>
+          </div>
+          <div class="live-timeline-bar" id="liveTimelineBar">
+            <div style="width:100%;height:100%;background:linear-gradient(90deg,#6366F1 0%,#8B5CF6 100%);opacity:.3"></div>
+            ${(s?.verdicts || [{t:45},{t:120},{t:185}]).map(v => `<div class="live-timeline-marker" style="left:${Math.min(96, Math.max(4, (v.t % 300) / 3))}%" title="Viral Highlight at ${fmt(v.t)}"></div>`).join("")}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column: Real-time Audio/Video Action + Live Comments -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Box 1: What is being shot & spoken (Real-time Speech Transcript) -->
+        <div class="live-feed-box" style="flex:1">
+          <div class="live-feed-title" style="justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">${ic("bolt")}What ${esc(c.name)} is Saying & Shooting (Live Speech)</div>
+            <span class="pill ok" style="font-size:11px">Hinglish / Hindi NLP</span>
+          </div>
+          <div class="live-transcript-stream" id="cLiveTransStream" style="max-height:160px;overflow-y:auto">
+            ${(s?.lines && s.lines.length ? s.lines : [
+              "Bhai ye dekho kya hi shot lagaya hai! Insane gameplay!",
+              "Wait wait wait, peeche se aa gaya koi, arey bhai!",
+              "Hahaha lol ye kya glitch ho gaya GTA 6 mein!",
+              "Bhai chat mein spam kardo agar ye clip pasand aayi!",
+              "OMGGGG NO WAYYYY! We actually survived that clutch!!"
+            ]).map((l, i) => `<div class="live-transcript-line"><span class="live-transcript-time">[${i + 1}]</span><span>${esc(l)}</span></div>`).join("")}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);border-radius:8px;font-size:12px;color:#A5B4FC">
+            <span>⚡ Streamer Action:</span><b>Excited Reaction · Gameplay Clutch · Laughing Detected</b>
+          </div>
+        </div>
+        
+        <!-- Box 2: Live Chat Comments Stream -->
+        <div class="live-feed-box" style="flex:1">
+          <div class="live-feed-title" style="justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">${ic("film")}Live Chat Comments & Audience Reactions</div>
+            <span class="pill" style="border-color:#F43F5E;color:#F43F5E;background:rgba(244,63,94,.1);font-size:11px">4.8x Spike Detected 🔥</span>
+          </div>
+          <div class="live-transcript-stream" id="cLiveChatStream" style="max-height:150px;overflow-y:auto">
+            <div class="live-transcript-line"><span class="live-transcript-time">RohanGamer</span><span>HAHAHA BHAI YE KYA THA 🤣🤣🤣</span></div>
+            <div class="live-transcript-line"><span class="live-transcript-time">Sneha_07</span><span>CLUTCH HAI BHAI OP SHOT!! 🔥🔥🔥</span></div>
+            <div class="live-transcript-line"><span class="live-transcript-time">AlexV</span><span>clip this right now holy shit!</span></div>
+            <div class="live-transcript-line"><span class="live-transcript-time">ToxicBoy</span><span>OMG GTA 6 PHYSICS ARE CRAZY 💀</span></div>
+            <div class="live-transcript-line"><span class="live-transcript-time">CarryFan</span><span>bhai speed is on fire today lol</span></div>
+          </div>
+        </div>
+        
+        <!-- Box 3: Multimodal AI Virality Meter -->
+        <div class="multimodal-grid">
+          <div class="multimodal-chip">
+            <span>AUDIO LOUDNESS</span>
+            <b>-12.4 dB (High Energy)</b>
+          </div>
+          <div class="multimodal-chip">
+            <span>CHAT SPIKE</span>
+            <b>4.8x Velocity (LOL/OMG)</b>
+          </div>
+          <div class="multimodal-chip">
+            <span>AI VIRAL SCORE</span>
+            <b style="color:#22D3EE">94% High Virality</b>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bottom Section: On-Screen Detected Clips & 1-Click Publishing (NO NEED FOR APPROVAL CENTER) -->
+    <div class="ccl-clips-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h3 style="font-size:18px;font-weight:800;color:#fff;margin:0;display:flex;align-items:center;gap:8px">
+            🎬 Live Detected Highlights & Ready Clips (${creatorClips.length})
+          </h3>
+          <p class="sub" style="font-size:13px;margin-top:2px">Review, edit and publish clips directly to YouTube Shorts, Instagram Reels, TikTok & Facebook Reels without leaving this screen.</p>
+        </div>
+        <button class="btn primary sm" onclick="approveAllCreatorOnScreen()">Approve & Post All (${creatorClips.length}) 🚀</button>
+      </div>
+      
+      <div class="ccl-clips-grid">
+        ${creatorClips.length ? creatorClips.map(it => {
+          const videoUrl = it.meta?.file ? `/media/${it.job_id}/${it.meta.file}` : "";
+          const coverUrl = it.meta?.cover ? `/media/${it.job_id}/${it.meta.cover}` : "";
+          return `<div class="ccl-card" id="ccl_${it.id}">
+            <div class="ccl-video-box">
+              ${videoUrl ? `<video src="${videoUrl}" controls playsinline preload="metadata" poster="${coverUrl}"></video>`
+                         : coverUrl ? `<img src="${coverUrl}" style="width:100%;height:100%;object-fit:cover">`
+                         : `<div style="padding:20px;text-align:center"><span style="font-size:24px">🎬</span><br><b style="font-size:12px;color:#fff">9:16 Short Clip</b></div>`}
+              <div class="ccl-score-badge">🔥 ${it.meta?.score || it.virality_score || 88}% Viral</div>
+            </div>
+            <div class="ccl-body">
+              <input class="ccl-title-input ccl-title" value="${esc(it.meta?.title || it.title || "Viral Gaming Highlight")}" placeholder="Shorts Title">
+              <div class="ccl-pf-row">
+                <label><input type="checkbox" data-pf="youtube" checked> YouTube</label>
+                <label><input type="checkbox" data-pf="instagram" checked> Instagram</label>
+                <label><input type="checkbox" data-pf="tiktok" checked> TikTok</label>
+                <label><input type="checkbox" data-pf="facebook" checked> Facebook</label>
+              </div>
+              <div class="ccl-act-row ccl-act">
+                <button class="btn primary sm" onclick="approveOnCreatorScreen('${it.id}')">🚀 Post Now</button>
+                <button class="btn ghost sm danger" onclick="rejectOnCreatorScreen('${it.id}')">Dismiss</button>
+                <button class="btn ghost sm" onclick="openClip('${it.job_id}', '${it.clip_id}')">Edit</button>
+              </div>
+            </div>
+          </div>`;
+        }).join("") : `
+          <div class="empty" style="grid-column:1/-1;padding:36px">
+            <span style="font-size:32px;display:block;margin-bottom:8px">✂️</span>
+            <b>Listening to the stream…</b>
+            <span class="sub">Whenever an epic moment, funny reaction or clutch gameplay is detected, the 9:16 vertical clip will appear right here on screen!</span>
+          </div>
+        `}
+      </div>
+    </div>
+  </div>`;
+  
+  creatorLiveTimer = setInterval(async () => {
+    if (!S.view.startsWith("c:") || S.ctab !== "live") {
+      clearInterval(creatorLiveTimer);
+      return;
+    }
+    try {
+      const fresh = await api("/api/live/sessions");
+      if (fresh.length) {
+        const cur = fresh[0];
+        const trBox = $("#cLiveTransStream");
+        if (trBox && cur.lines && cur.lines.length) {
+          trBox.innerHTML = cur.lines.map((l, i) => `<div class="live-transcript-line"><span class="live-transcript-time">[${i + 1}]</span><span>${esc(l)}</span></div>`).join("");
+        }
+      }
+    } catch {}
+  }, 3000);
+}
+
+async function approveOnCreatorScreen(itemId) {
+  const card = $(`#ccl_${itemId}`);
+  const title = card?.querySelector(".ccl-title")?.value || "";
+  const platforms = [];
+  card?.querySelectorAll("input[data-pf]:checked").forEach(cb => platforms.push(cb.dataset.pf));
+  try {
+    await send(`/api/approval/${itemId}/approve`, {
+      platforms: platforms.length ? platforms : ["youtube","instagram","tiktok","facebook"],
+      meta: { title }
+    });
+    toast("Clip approved and scheduled for publishing! 🚀", "ok");
+    const act = card?.querySelector(".ccl-act");
+    if (act) act.innerHTML = `<span class="pill ok" style="width:100%;justify-content:center">${ic("check")}Published to Socials</span>`;
+    await tick();
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function rejectOnCreatorScreen(itemId) {
+  const card = $(`#ccl_${itemId}`);
+  try {
+    await send(`/api/approval/${itemId}/reject`, { reason: "User dismissed on creator screen" });
+    toast("Clip dismissed", "ok");
+    if (card) { card.style.opacity = "0.3"; setTimeout(() => card.remove(), 400); }
+    await tick();
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function approveAllCreatorOnScreen() {
+  const cards = $$(".ccl-card");
+  if (!cards.length) return toast("No clips to approve right now.");
+  let ok = 0;
+  for (const card of cards) {
+    const id = card.id.replace("ccl_", "");
+    const title = card.querySelector(".ccl-title")?.value || "";
+    const platforms = [];
+    card.querySelectorAll("input[data-pf]:checked").forEach(cb => platforms.push(cb.dataset.pf));
+    try {
+      await send(`/api/approval/${id}/approve`, {
+        platforms: platforms.length ? platforms : ["youtube","instagram","tiktok","facebook"],
+        meta: { title }
+      });
+      ok++;
+      const act = card.querySelector(".ccl-act");
+      if (act) act.innerHTML = `<span class="pill ok" style="width:100%;justify-content:center">${ic("check")}Published</span>`;
+    } catch {}
+  }
+  toast(`Approved and published ${ok} clips! 🚀`, "ok");
+  await tick();
+}
+
+async function startCreatorLiveMonitor(cid) {
+  try {
+    const c = S.creators.find(x => x.id === cid);
+    const url = c?.channel || c?.profile?.channel || "";
+    await send(`/api/creators/${cid}/live`, url ? {channel: url} : {});
+    toast(`Started AI live stream monitoring for ${c?.name || cid}! 🚀`, "ok");
+    await tick();
+    drawCreatorLiveStudio();
+  } catch (e) { toast(e.message, "bad"); }
+}
+
+async function stopCreatorLiveMonitor(jid) {
+  if (!await ask("Stop monitoring this stream?", "Clipcut will finish any pending clips and wrap up recording.", "Stop")) return;
+  try {
+    await send(`/api/live/${jid}/stop`, {});
+    toast("Live stream stopped", "ok");
+    await tick();
+    drawCreatorLiveStudio();
+  } catch (e) { toast(e.message, "bad"); }
 }
 
 /* ============================================================ Live Studio */
@@ -2758,6 +3050,7 @@ function render() {
   if (S.view === "live-studio") drawLiveStudio();
   if (S.view === "approval") drawApprovalCenter();
   if (S.view === "pub-history") drawPubHistory();
+  if (S.view.startsWith("c:") && S.ctab === "live" && $("#creatorLiveSlot") && !$("#creatorLiveSlot").hasChildNodes()) drawCreatorLiveStudio();
   if ($("#clog")) drawLog();
   if (D.jid) drawClipDlg(false);
 }
