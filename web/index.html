@@ -2268,7 +2268,12 @@ const fmtK = n => (n = Number(n) || 0) >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.
 function playerSrc(k, e) {
   if (!e) return "";
   if (k === "twitch") return `https://player.twitch.tv/?channel=${encodeURIComponent(e)}&parent=${location.hostname}&muted=true&autoplay=true`;
-  if (k === "youtube") return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(e)}?autoplay=1&mute=1&playsinline=1`;
+  if (k === "youtube") {
+    let vid = e;
+    const m = String(e).match(/(?:v=|youtu\.be\/|embed\/|\/live\/)([A-Za-z0-9_-]{11})/);
+    if (m) vid = m[1];
+    return `https://www.youtube.com/embed/${encodeURIComponent(vid)}?autoplay=1&mute=1&playsinline=1&enablejsapi=1`;
+  }
   if (k === "kick") return `https://player.kick.com/${encodeURIComponent(e)}?muted=true&autoplay=true`;
   return "";
 }
@@ -2287,7 +2292,7 @@ function drawStream() {
     const ipHost = /^[\d.]+$|^\[/.test(location.hostname);
     pl.innerHTML = k === "twitch" && ipHost
       ? `<div class="noembed">${platLogo(k)}<b>Twitch only plays inside sites with a web address</b><span>It will play here once ClipCut is on its domain, or open ClipCut at localhost instead of ${esc(location.hostname)}.</span><a class="btn sm" href="${esc(p.channel)}" target="_blank" rel="noopener">Watch on Twitch ${ic("upright")}</a></div>`
-      : src ? `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="${PLAT[k].name} live stream"></iframe>` : "";
+      : src ? `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen title="${PLAT[k].name} live stream"></iframe>` : "";
   }
   const stats = [p.viewers != null ? [fmtK(p.viewers), "watching"] : null, p.started ? [since(p.started), "live for"] : null,
                  p.followers ? [p.followers.split(" ")[0], p.followers.split(" ").slice(1).join(" ")] : null].filter(Boolean);
@@ -3107,7 +3112,7 @@ async function drawCreatorLiveStudio() {
       <!-- Left Column: Live Video Player & Timeline -->
       <div>
         <div class="live-player-box">
-          ${src ? `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`
+          ${src ? `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
                 : `<div class="noembed"><b>Live Stream Connected</b><span>Watching video & audio in background.</span></div>`}
         </div>
         
@@ -3442,7 +3447,7 @@ async function drawLiveStudio() {
             <span class="status-pill on-air" style="font-size:10px;padding:2px 8px"><span class="pulse-dot"></span>LIVE MONITOR</span>
           </div>
           <div class="live-player-box">
-            ${src ? `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>` : `
+            ${src ? `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>` : `
               <div class="noembed">
                 <div style="font-size:32px;margin-bottom:4px">📡</div>
                 <b>Broadcast Monitor Standby</b>
