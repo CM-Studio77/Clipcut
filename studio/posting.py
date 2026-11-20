@@ -52,15 +52,31 @@ def _mirror(p):
         jobs.save(job)
 
 
+VIRAL_PEAK_HOURS = [(9, 0), (13, 30), (18, 30), (21, 0)]
+
+
+def _align_to_viral_slot(target_time: float) -> float:
+    """Aligns post time to the nearest optimal viral engagement window."""
+    lt = time.localtime(target_time)
+    today = (lt.tm_year, lt.tm_mon, lt.tm_mday)
+    for h, m in VIRAL_PEAK_HOURS:
+        slot = time.mktime((*today, h, m, 0, 0, 0, -1))
+        if slot >= target_time - 300:
+            return slot
+    next_day_lt = time.localtime(target_time + 86400)
+    return time.mktime((next_day_lt.tm_year, next_day_lt.tm_mon, next_day_lt.tm_mday, VIRAL_PEAK_HOURS[0][0], VIRAL_PEAK_HOURS[0][1], 0, 0, 0, -1))
+
+
 def _next_slot(account_id, gap_min, cap):
-    """Earliest time that respects the gap between posts and the daily cap for this account."""
+    """Earliest time that respects the gap between posts, viral engagement slots, and the daily cap for this account."""
     mine = [p for p in _mine() if p["account"] == account_id and p["status"] in OPEN + ("posted",)]
     t = max(time.time(), max((p.get("posted_at") or p["due_at"] for p in mine), default=0) + gap_min * 60)
+    t = _align_to_viral_slot(t)
     for _ in range(30):
         if sum(1 for p in mine if _day(p.get("posted_at") or p["due_at"]) == _day(t)) < cap:
             break
         lt = time.localtime(t + 86400)
-        t = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, 9, 0, 0, 0, 0, -1))  # 9:00 next day
+        t = time.mktime((lt.tm_year, lt.tm_mon, lt.tm_mday, VIRAL_PEAK_HOURS[0][0], VIRAL_PEAK_HOURS[0][1], 0, 0, 0, -1))
     return t
 
 

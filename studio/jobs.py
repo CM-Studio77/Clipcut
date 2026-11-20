@@ -409,6 +409,8 @@ def request_render(jid, cid, changes: dict):
             new["tags"] = [str(x).strip() for x in changes["tags"] if x][:25]
         elif isinstance(changes["tags"], str):
             new["tags"] = [t.strip() for t in changes["tags"].split(",") if t.strip()][:25]
+    if "script" in changes and changes["script"] in ("hinglish", "hindi", "english"):
+        new["script"] = changes["script"]
     if new.get("style") not in render.STYLES:
         new["style"] = DEFAULTS["style"]
     if new.get("layout") not in render.LAYOUTS:
@@ -550,22 +552,28 @@ def render_one(job, clip, words):
 
 
 def _caption_words(job, clip, words, off):
-    span = [round(clip["start"], 2), round(clip["end"], 2), "en2"]      # "en2": captions made always-English
-    if clip.get("fixed_for") == span and clip.get("fixed_words") and not any(
-            roman.needs_roman(w.get("w", "")) for w in clip["fixed_words"]):
+    script = clip.get("script", "hinglish")
+    span = [round(clip["start"], 2), round(clip["end"], 2), f"{script}2"]
+    if clip.get("fixed_for") == span and clip.get("fixed_words"):
         raw = clip["fixed_words"]          # already tidied for this exact span: no second AI call
     else:
         raw = [w for w in words if clip["start"] - 1 <= w["s"] <= clip["end"] + 1]
         try:
             usage.set_context(job.get("creator"), job.get("title") or "")
-            # For Hindi/Urdu, never borrow YouTube's broken English auto-translations; use Whisper + roman transliteration!
-            yt_en = (lambda: _english_part(job, clip)) if job.get("lang") not in ("hi", "ur") else None
-            raw = brain.english_captions(raw, job.get("lang") or "", job.get("title") or "",
-                                         youtube_english=yt_en)
+            lang = job.get("lang") or ""
+            if script == "english" and lang in ("hi", "ur"):
+                raw = brain.translate_caption_words(raw, lang, job.get("title") or "")
+            elif script == "hindi":
+                raw = [w for w in raw if w.get("w")]
+            else:
+                yt_en = (lambda: _english_part(job, clip)) if lang not in ("hi", "ur") else None
+                raw = brain.english_captions(raw, lang, job.get("title") or "",
+                                             youtube_english=yt_en)
             clip.update(fixed_words=raw, fixed_for=span)
         except Exception:  # noqa: BLE001 - captions still render with the words as heard
             pass
-    # the last word on it: whatever was said, nothing is drawn in Hindi or Urdu script
+    if script == "hindi":
+        return [dict(w, s=w["s"] - off, e=w["e"] - off) for w in raw]
     return [dict(w, s=w["s"] - off, e=w["e"] - off) for w in roman.words(raw)]
 
 

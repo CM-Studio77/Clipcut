@@ -12,11 +12,17 @@ W, H = config.OUT_W, config.OUT_H
 
 # ASS colours are &HBBGGRR. `size` is the ASS font size (line height); _Font turns it into real pixels.
 STYLES = {
-    "bounce": {"label": "Bounce", "font": "Poppins ExtraBold", "size": 132, "base": "FFFFFF", "active": "00F0FF",
+    "bounce": {"label": "Bounce (Cyan Pop)", "font": "Poppins ExtraBold", "size": 132, "base": "FFFFFF", "active": "00F0FF",
                "strong": "FFFFFF", "outline": 7, "pop": 112, "upper": True, "per": 3},
-    "hype": {"label": "Hype", "font": "Anton", "size": 152, "base": "FFFFFF", "active": "3C3CFF",
+    "hormozi": {"label": "Hormozi (Yellow Pop)", "font": "Anton", "size": 145, "base": "FFFFFF", "active": "00FFFF",
+                "strong": "00FFFF", "outline": 8, "pop": 120, "upper": True, "per": 2},
+    "mrbeast": {"label": "MrBeast (Cyan & Black)", "font": "Poppins ExtraBold", "size": 140, "base": "FFFFFF", "active": "FFF000",
+                "strong": "00FFFF", "outline": 9, "pop": 118, "upper": True, "per": 2},
+    "neon_green": {"label": "Neon Green (Viral)", "font": "Poppins ExtraBold", "size": 136, "base": "FFFFFF", "active": "33FF00",
+                   "strong": "33FF00", "outline": 8, "pop": 118, "upper": True, "per": 2},
+    "hype": {"label": "Hype (Red & Gold)", "font": "Anton", "size": 152, "base": "FFFFFF", "active": "3C3CFF",
              "strong": "00D7FF", "outline": 7, "pop": 114, "upper": True, "per": 2},
-    "clean": {"label": "Clean", "font": "Poppins ExtraBold", "size": 100, "base": "FFFFFF", "active": "6BD7FF",
+    "clean": {"label": "Clean (Minimal)", "font": "Poppins ExtraBold", "size": 100, "base": "FFFFFF", "active": "6BD7FF",
               "strong": "FFFFFF", "outline": 5, "pop": 106, "upper": False, "per": 4},
 }
 HOOK = {"font": "Poppins ExtraBold", "size": 96, "ink": "14100E", "box": "FFFFFF", "pad_x": 36, "pad_y": 22, "radius": 26,
@@ -168,6 +174,8 @@ def build_ass(words, start, end, hook, style_name, highlight, hook_y, cap_y) -> 
     st = STYLES.get(style_name, STYLES["bounce"])
     words = [dict(w, s=w["s"] - CAPTION_LEAD, e=w["e"] - CAPTION_LEAD) for w in words]
     strong = {_key(h) for h in highlight if _key(h)}
+    has_hindi = any(roman.needs_roman(w.get("w", "")) for w in words)
+    font_name = "Nirmala UI" if has_hindi else st['font']
     head = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {W}
@@ -177,7 +185,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Cap,{st['font']},{st['size']},&H00{st['base']},&H00{st['base']},&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,{st['outline']},0,5,0,0,0,1
+Style: Cap,{font_name},{st['size']},&H00{st['base']},&H00{st['base']},&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,{st['outline']},0,5,0,0,0,1
 Style: Hook,{HOOK['font']},{HOOK['size']},&H00{HOOK['ink']},&H00{HOOK['ink']},&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1
 
 [Events]
