@@ -20,7 +20,7 @@ MAX_PIC = 600_000
 
 from concurrent.futures import ThreadPoolExecutor
 
-_pool = ThreadPoolExecutor(max_workers=16, thread_name_prefix="profiles")   # lookups never pile up as thousands of threads
+_pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="profiles")   # lookups never pile up as thousands of threads
 _live: dict = {}          # channel link -> (when, result): everyone watching the same channel shares one check
 _live_locks: dict = {}
 LIVE_SHARED_FOR = 75      # seconds a live check is reused for every user

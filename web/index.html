@@ -105,11 +105,11 @@
   --text-ghost:  #475569;
 
   /* Classic Token Mappings to Obsidian Glass System */
-  --brand:#00f3ff;--brand-press:#00c8d4;--brand-ink:#050608;--brand-soft:rgba(0,243,255,.12);--brand-line:rgba(0,243,255,.42);--brand-deep:#00d0dc;
+  --brand:#00f3ff;--brand-press:#00c8d4;--brand-ink:#f8fafc;--brand-soft:rgba(0,243,255,.14);--brand-line:rgba(0,243,255,.42);--brand-deep:#00d0dc;
   --accent:#a855f7;--accent-glow:rgba(168,85,247,.38);
-  --frame:#0a0b10;--frame-2:#151824;--frame-line:rgba(255,255,255,.06);--frame-text:#f8fafc;--frame-dim:#94a3b8;
-  --bg:#0f111a;--card:#151824;--card-glass:rgba(27,31,46,.65);--muted:#1b1f2e;--line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.16);
-  --text:#f8fafc;--dim:#94a3b8;--faint:#64748b;
+  --frame:#0a0b10;--frame-2:#151824;--frame-line:rgba(255,255,255,.08);--frame-text:#f8fafc;--frame-dim:#cbd5e1;
+  --bg:#0f111a;--card:#151824;--card-glass:rgba(27,31,46,.75);--muted:#1b1f2e;--line:rgba(255,255,255,.10);--line-2:rgba(255,255,255,.18);
+  --text:#f8fafc;--dim:#cbd5e1;--faint:#94a3b8;
   --good:#00ff9d;--good-soft:rgba(0,255,157,.12);--bad:#ff3366;--bad-soft:rgba(255,51,102,.14);--live:#ff3366;
   --warn:#ffb700;--warn-soft:rgba(255,183,0,.12);
   color-scheme:dark;
@@ -197,13 +197,13 @@ main{background:var(--bg);margin:8px 8px 8px 0;border-radius:var(--r-lg);height:
 .utabs .tabbtn{height:34px;padding:0 14px;border-radius:8px;background:transparent;color:var(--dim);font-size:13px;transition:background-color .18s ease,color .18s ease}
 .utabs .tabbtn:hover{background:rgba(255,255,255,.08);color:#fff}
 .utabs .tabbtn::after{display:none}
-.utabs .tabbtn.on{background:transparent;color:#050608;font-weight:700}
+.utabs .tabbtn.on{background:transparent;color:#f8fafc;font-weight:700}
 .utabs .tabbtn{position:relative;z-index:1}
 .utabs .ind{position:absolute;top:3px;bottom:3px;left:0;border-radius:8px;background:var(--brand);z-index:0;transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1)}
 .utabs .tabbtn,.utabs .tabbtn svg,.utabs .tabbtn .n{transition:color .25s ease,background-color .25s ease}
-.utabs .tabbtn.on svg{color:#050608}
+.utabs .tabbtn.on svg{color:var(--cyan-primary)}
 .utabs .tabbtn .n{background:var(--muted);color:var(--dim)}
-.utabs .tabbtn.on .n{background:rgba(5,6,8,.2);color:#050608}
+.utabs .tabbtn.on .n{background:rgba(0,243,255,.22);color:var(--cyan-primary)}
 .rdot{flex:none;width:9px;height:9px;border-radius:50%;background:#fff}
 .btn .rdot.on{background:var(--crimson-primary);animation:pulse 1.3s infinite}
 /* live stream panel */
@@ -2091,11 +2091,19 @@ const clock = t => new Date(t * 1000).toLocaleString([], {weekday:"short", hour:
 const when = t => new Date(t * 1000).toLocaleString([], {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"});
 const opts = (map, val) => Object.entries(map).map(([k, v]) => `<option value="${esc(k)}"${String(k) === String(val) ? " selected" : ""}>${esc(v)}</option>`).join("");
 
-async function api(path, opt) {
-  const r = await fetch(path, opt);
-  if (r.status === 401) { location.href = "/login"; throw new Error("Please sign in."); }
-  if (!r.ok) { let d = r.statusText; try { d = (await r.json()).detail || d; } catch {} throw new Error(typeof d === "string" ? d : "Something went wrong"); }
-  return r.json();
+async function api(path, opt = {}) {
+  const ctrl = new AbortController();
+  const tm = setTimeout(() => ctrl.abort(), opt.timeout || 10000);
+  try {
+    const r = await fetch(path, { ...opt, signal: opt.signal || ctrl.signal });
+    clearTimeout(tm);
+    if (r.status === 401) { location.href = "/login"; throw new Error("Please sign in."); }
+    if (!r.ok) { let d = r.statusText; try { d = (await r.json()).detail || d; } catch {} throw new Error(typeof d === "string" ? d : "Something went wrong"); }
+    return r.json();
+  } catch (err) {
+    clearTimeout(tm);
+    throw err;
+  }
 }
 const send = (path, body, method = "POST") => api(path, {method, headers:{"Content-Type":"application/json"}, body:JSON.stringify(body ?? {})});
 function toast(msg, kind = "") {
@@ -4883,7 +4891,11 @@ $("#collapseBtn").innerHTML = ic("sidebar"); $("#menuBtn").innerHTML = ic("menu"
 try { if (localStorage.getItem("mini")) $("#app").classList.add("mini"); } catch {}
 $("#main").addEventListener("scroll", () => $(".topbar").classList.toggle("stuck", $("#main").scrollTop > 4), {passive:true});
 (async () => {
+  const [initV, initT] = location.pathname.startsWith("/app/") ? fromPath(location.pathname) : ["overview", "clips"];
+  S.view = initV; S.ctab = initT;
+  drawShell();
   try { S.status = await api("/api/status"); } catch {}
+  drawShell();
   const q = new URLSearchParams(location.search);
   if (q.get("connected") || q.get("connect_error")) {
     const ok = q.get("connected"), err = q.get("connect_error"), nm = q.get("name");
@@ -4892,8 +4904,7 @@ $("#main").addEventListener("scroll", () => $(".topbar").classList.toggle("stuck
   }
   if (q.get("verified")) { history.replaceState(null, "", location.pathname); setTimeout(() => toast("Email confirmed. You're ready to clip.", "ok"), 300); }
   if (q.get("verify_error")) { history.replaceState(null, "", location.pathname); setTimeout(() => toast(q.get("verify_error"), "bad"), 300); }
-  if (location.pathname.startsWith("/app/")) { const [v, tab] = fromPath(location.pathname); S.view = v; S.ctab = tab; }  // the address decides, before anything loads
-  await tick();
+  try { await tick(); } catch {}
   { const [v, tab] = location.pathname.startsWith("/app/") ? fromPath(location.pathname) : ["overview", "clips"]; go(v, tab, true); remember(S.view, S.ctab, "replace"); }
   try {  // a link pasted on the home page before signing up
     const link = sessionStorage.getItem("clipcut_link");
