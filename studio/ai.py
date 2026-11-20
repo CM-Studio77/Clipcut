@@ -3,23 +3,25 @@
 
     PEAKCUT_AI_PROVIDER   gemini | openai | xai | groq | openrouter | anthropic | ollama | custom
     PEAKCUT_AI_MODELS     one or more model ids, comma separated, tried in this order
-    PEAKCUT_AI_KEY        your key (or PEAKCUT_AI_KEY_FILE, a file holding it)
+    PEAKCUT_AI_KEY        your key(s) - multiple keys can be comma, semicolon, or newline separated for auto-failover
     PEAKCUT_AI_BASE_URL   only for "custom" (any service that speaks the OpenAI chat format), or to override
 
-Every service is asked for the same thing: JSON that follows a small schema. Gemini takes the schema directly.
-The others are told the schema in the prompt and asked for a JSON object, which works with any chat model.
-
-One picture can also be shown (`see`), which is how the webcam is looked for on a gaming stream. A model that
-cannot look at pictures answers with something else, and that is simply taken as "it did not look"."""
+Supports multiple API keys with automatic failover: if one key hits a rate limit or quota exhaustion (HTTP 429/503),
+Clipcut automatically switches to the next available healthy key in the pool without interrupting streams or clipping.
+"""
 import base64
 import json
+import logging
 import os
 import re
 import threading
+import time
 
 import httpx
 
 from . import config
+
+log = logging.getLogger("studio.ai")
 
 # name -> (label shown on the pages, address, how it is spoken to, where to get a key, an example model id)
 PROVIDERS = {
@@ -38,6 +40,121 @@ NO_KEY = {"ollama", "custom"}       # a model running on your own machine needs 
 # ---------------------------------------------------------------- the settings in use
 _lock = threading.Lock()
 _saved = {"at": None, "data": {}}
+
+# Key Pool State & Auto-Failover
+_key_lock = threading.Lock()
+_active_key_idx = 0
+_key_cooldowns: dict[str, float] = {}  # key -> timestamp until which key is in cooldown
+
+
+def _parse_keys(raw) -> list[str]:
+    """Extract individual API keys from string or list, supporting comma, newline, or semicolon delimiters."""
+    if not raw:
+        return []
+    if isinstance(raw, (list, tuple)):
+        items = raw
+    elif isinstance(raw, str):
+        items = re.split(r"[\r\n,;]+", raw)
+    else:
+        items = [str(raw)]
+    cleaned = []
+    seen = set()
+    for item in items:
+        k = str(item).strip().strip('"').strip("'")
+        if k and len(k) >= 8 and k not in seen:
+            cleaned.append(k)
+            seen.add(k)
+    return cleaned
+
+
+def is_rate_limit_or_quota_error(status_code: int, text: str) -> bool:
+    """True if the HTTP response indicates rate limiting, quota exhaustion, or temporary server overload."""
+    if status_code in (429, 503):
+        return True
+    low = (text or "").lower()
+    return any(needle in low for needle in (
+        "resource_exhausted",
+        "quota",
+        "rate limit",
+        "rate_limit",
+        "too many requests",
+        "high demand",
+        "temporarily",
+        "overloaded",
+        "spikes in demand",
+        "exceeded your current quota",
+    ))
+
+
+def mark_key_cooldown(k: str, seconds: float = 60.0, reason: str = ""):
+    """Put a key in cooldown and advance active key index to the next key."""
+    global _active_key_idx
+    if not k:
+        return
+    with _key_lock:
+        _key_cooldowns[k] = time.time() + seconds
+        pool = keys()
+        if pool and k in pool:
+            idx = pool.index(k)
+            _active_key_idx = (idx + 1) % len(pool)
+    hint = f"...{k[-4:]}" if len(k) >= 4 else "???"
+    print(f"[AI Pool] Key {hint} entered cooldown ({seconds:.0f}s). Reason: {reason or 'rate limit hit'}")
+
+
+def mark_key_success(k: str):
+    """Clear cooldown on successful use."""
+    with _key_lock:
+        if k in _key_cooldowns:
+            del _key_cooldowns[k]
+
+
+def get_active_key(candidate_keys: list[str] | None = None) -> str:
+    """Returns the healthiest key from the pool, skipping keys in cooldown when possible."""
+    global _active_key_idx
+    pool = candidate_keys if candidate_keys is not None else keys()
+    if not pool:
+        return ""
+    with _key_lock:
+        now = time.time()
+        for k in list(_key_cooldowns.keys()):
+            if _key_cooldowns[k] <= now:
+                del _key_cooldowns[k]
+
+        n = len(pool)
+        for i in range(n):
+            idx = (_active_key_idx + i) % n
+            k = pool[idx]
+            if k not in _key_cooldowns or _key_cooldowns[k] <= now:
+                _active_key_idx = idx
+                return k
+
+        # All keys in cooldown: pick the one that expires soonest
+        return min(pool, key=lambda k: _key_cooldowns.get(k, 0))
+
+
+def get_ordered_keys(pool: list[str] | None = None) -> list[str]:
+    """Return keys prioritized: active/available keys first, followed by cooldown keys in expiration order."""
+    all_k = list(pool if pool is not None else keys())
+    if not all_k:
+        k = key()
+        return [k] if k else []
+    now = time.time()
+    available = []
+    cooling = []
+    for k in all_k:
+        cd = _key_cooldowns.get(k, 0)
+        if cd <= now:
+            available.append(k)
+        else:
+            cooling.append((cd, k))
+    cooling.sort(key=lambda x: x[0])
+
+    cur = key()
+    if cur in available:
+        idx = available.index(cur)
+        available = available[idx:] + available[:idx]
+
+    return available + [k for _, k in cooling]
 
 
 def _file():
@@ -61,13 +178,19 @@ def _from_dashboard() -> dict:
 
 
 def current() -> dict:
-    """Provider, models, address and key: what the dashboard saved, or else what .env says."""
+    """Provider, models, address and keys: what the dashboard saved, or else what .env says."""
     d = _from_dashboard()
     p = str(d.get("provider") or config.AI_PROVIDER or "").strip().lower()
-    return {"provider": ALIASES.get(p, p),
-            "models": list(d["models"]) if d.get("provider") else list(config.AI_MODELS),
-            "base_url": (str(d.get("base_url") or "") if d.get("provider") else config.AI_BASE_URL).rstrip("/"),
-            "key": str(d["key"]) if d.get("provider") and "key" in d else config.ai_key()}
+    raw_keys = d.get("keys") or d.get("key") or config.ai_key()
+    parsed_keys = _parse_keys(raw_keys)
+    active_k = get_active_key(parsed_keys) if parsed_keys else ""
+    return {
+        "provider": ALIASES.get(p, p),
+        "models": list(d["models"]) if d.get("provider") else list(config.AI_MODELS),
+        "base_url": (str(d.get("base_url") or "") if d.get("provider") else config.AI_BASE_URL).rstrip("/"),
+        "key": active_k,
+        "keys": parsed_keys,
+    }
 
 
 def provider() -> str:
@@ -78,8 +201,12 @@ def models() -> list:
     return current()["models"]
 
 
+def keys() -> list[str]:
+    return current().get("keys", [])
+
+
 def key() -> str:
-    return current()["key"]
+    return current().get("key", "")
 
 
 def label() -> str:
@@ -93,23 +220,42 @@ def base_url() -> str:
 
 def ready() -> bool:
     c = current()
-    return bool(c["provider"] in PROVIDERS and c["models"] and base_url() and (c["key"] or c["provider"] in NO_KEY))
+    return bool(c["provider"] in PROVIDERS and c["models"] and base_url() and (c["key"] or c["keys"] or c["provider"] in NO_KEY))
 
 
 def public() -> dict:
     """What the settings page may see. The key itself never leaves the server: only whether there is one, and
     its last four characters so the owner can tell which key it is."""
     c = current()
-    return {"provider": c["provider"], "models": c["models"], "base_url": c["base_url"], "has_key": bool(c["key"]),
-            "key_hint": c["key"][-4:] if len(c["key"]) >= 12 else "", "ready": ready(), "label": label(),
-            "saved_here": bool(_from_dashboard().get("provider")),
-            "providers": [{"id": k, "label": v[0], "address": v[1], "needs_key": k not in NO_KEY, "key_url": v[3], "example": v[4]}
-                          for k, v in PROVIDERS.items()]}
+    all_k = keys()
+    active_k = key()
+    hints = [k[-4:] for k in all_k if len(k) >= 4]
+
+    if len(all_k) > 1:
+        hint_str = f"{len(all_k)} keys active (ending in {', '.join(hints)}) - auto-failover enabled"
+    elif hints:
+        hint_str = hints[0]
+    else:
+        hint_str = ""
+
+    return {
+        "provider": c["provider"],
+        "models": c["models"],
+        "base_url": c["base_url"],
+        "has_key": bool(active_k or all_k),
+        "key_count": len(all_k),
+        "key_hints": hints,
+        "key_hint": hint_str,
+        "ready": ready(),
+        "label": label(),
+        "saved_here": bool(_from_dashboard().get("provider")),
+        "providers": [{"id": k, "label": v[0], "address": v[1], "needs_key": k not in NO_KEY, "key_url": v[3], "example": v[4]}
+                      for k, v in PROVIDERS.items()]
+    }
 
 
 def save(provider_id: str, model_ids, address: str = "", new_key=None) -> dict:
-    """Save the choice made in the dashboard. `new_key` None keeps the key that is already there (the page never
-    has it to send back); an empty string removes it."""
+    """Save the choice made in the dashboard. `new_key` None keeps the key(s) already there; an empty string removes them."""
     p = ALIASES.get(str(provider_id or "").strip().lower(), str(provider_id or "").strip().lower())
     if p not in PROVIDERS:
         raise ValueError("Choose one of the AI services in the list.")
@@ -126,19 +272,27 @@ def save(provider_id: str, model_ids, address: str = "", new_key=None) -> dict:
     if p == "custom" and not address:
         raise ValueError("A custom service needs its address, for example http://127.0.0.1:1234/v1")
     old = current()
-    k = old["key"] if new_key is None and old["provider"] == p else str(new_key or "").strip()[:400]
-    if not k and p not in NO_KEY:
+    if new_key is None and old["provider"] == p:
+        k_list = old.get("keys") or _parse_keys(old["key"])
+        k_str = ", ".join(k_list)
+    else:
+        k_str = str(new_key or "").strip()[:4000]
+        k_list = _parse_keys(k_str)
+    if not k_list and p not in NO_KEY:
         raise ValueError("Paste the key for this service.")
     with _lock:
         f = _file()
         tmp = f.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"provider": p, "models": ms, "base_url": address, "key": k}), encoding="utf-8")
+        payload = {"provider": p, "models": ms, "base_url": address, "key": k_str, "keys": k_list}
+        tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         try:
             os.chmod(tmp, 0o600)        # the key is only for whoever runs the server
         except OSError:
             pass
         tmp.replace(f)
         _saved["at"] = None
+        with _key_lock:
+            _key_cooldowns.clear()
     return public()
 
 
@@ -148,35 +302,57 @@ def list_models(provider_id=None, address=None, with_key=None) -> list:
     p = ALIASES.get(str(provider_id or c["provider"]).lower(), str(provider_id or c["provider"]).lower())
     if p not in PROVIDERS:
         raise ValueError("Choose one of the AI services in the list.")
-    k = str(with_key or "").strip() or (c["key"] if c["provider"] == p else "")
+
+    candidate_keys = _parse_keys(with_key) if with_key else keys()
+    if not candidate_keys and key():
+        candidate_keys = [key()]
+
     base = str(address or "").strip().rstrip("/") or (c["base_url"] if c["provider"] == p else "") or PROVIDERS[p][1]
     if not base:
         raise ValueError("Enter the service's address first.")
     how = PROVIDERS[p][2]
-    if how == "gemini":
-        r = httpx.get(base, params={"pageSize": 200}, headers={"x-goog-api-key": k}, timeout=20)
-    elif how == "anthropic":
-        r = httpx.get(f"{base}/models", params={"limit": 200}, headers={"x-api-key": k, "anthropic-version": "2023-06-01"}, timeout=20)
-    else:
-        r = httpx.get(f"{base}/models", headers={"Authorization": f"Bearer {k}"} if k else {}, timeout=20)
-    if r.status_code != 200:
-        raise AIError(f"HTTP {r.status_code} {r.text[:200].replace(k or chr(0), '<key>')}")
-    data = r.json()
-    if how == "gemini":
-        found = [m.get("name", "").split("/")[-1] for m in data.get("models", [])
-                 if "generateContent" in (m.get("supportedGenerationMethods") or [])]
-    else:
-        found = [m.get("id", "") for m in data.get("data", []) if isinstance(m, dict)]
-    return sorted({m for m in found if m})[:400]
+
+    last_r = None
+    for k in (candidate_keys or [""]):
+        if how == "gemini":
+            r = httpx.get(base, params={"pageSize": 200}, headers={"x-goog-api-key": k} if k else {}, timeout=20)
+        elif how == "anthropic":
+            r = httpx.get(f"{base}/models", params={"limit": 200}, headers={"x-api-key": k, "anthropic-version": "2023-06-01"} if k else {}, timeout=20)
+        else:
+            r = httpx.get(f"{base}/models", headers={"Authorization": f"Bearer {k}"} if k else {}, timeout=20)
+        last_r = r
+        if r.status_code == 200:
+            data = r.json()
+            if how == "gemini":
+                found = [m.get("name", "").split("/")[-1] for m in data.get("models", [])
+                         if "generateContent" in (m.get("supportedGenerationMethods") or [])]
+            else:
+                found = [m.get("id", "") for m in data.get("data", []) if isinstance(m, dict)]
+            return sorted({m for m in found if m})[:400]
+        elif is_rate_limit_or_quota_error(r.status_code, r.text) and len(candidate_keys) > 1:
+            continue
+    if last_r is not None:
+        raise AIError(f"HTTP {last_r.status_code} {last_r.text[:200]}")
+    return []
 
 
 def test() -> dict:
-    """One tiny request with the settings in use, to prove the key, the address and the model all work."""
+    """One tiny request with the settings in use, to prove the key(s), the address and the model all work."""
     ms = models()
     if not ready():
         raise ValueError("Save a service, a model and a key first.")
     out, sent, wrote = call(ms[0], 'Answer with a JSON array that holds the single string "ok".', {"type": "ARRAY", "items": {"type": "STRING"}})
-    return {"ok": True, "model": ms[0], "tokens": sent + wrote, "answer": str(out)[:80]}
+    cur = key()
+    all_k = keys()
+    return {
+        "ok": True,
+        "model": ms[0],
+        "tokens": sent + wrote,
+        "answer": str(out)[:80],
+        "active_key": cur[-4:] if len(cur) >= 4 else "",
+        "key_count": len(all_k),
+        "message": f"Verified working with key ending in {cur[-4:]} ({len(all_k)} keys in pool with auto-failover)" if len(all_k) > 1 else "AI connected successfully!"
+    }
 
 
 class AIError(RuntimeError):
@@ -195,14 +371,16 @@ def explain(e) -> str:
     if "401" in text or "403" in text or "api key" in low or "api_key" in low or "unauthorized" in low or "permission" in low:
         return f"{label()} refused the key. Paste a working key under Settings, AI."
     if "429" in text or "quota" in low or "rate limit" in low or "exhausted" in low:
-        return f"{label()} says the key has hit its limit or has no credit left. Check the account with {label()}, or try again later."
+        pool_len = len(keys())
+        if pool_len > 1:
+            return f"{label()} says all {pool_len} keys in pool have hit their rate limit or quota. Waiting for cooldown."
+        return f"{label()} says the key has hit its limit or has no credit left. Check the account with {label()}, add another key, or try again later."
     if "connect" in low or "timed out" in low or "timeout" in low or "getaddrinfo" in low or "refused" in low or "nodename" in low or "servname" in low or "nameresolutionerror" in low or "name resolution" in low:
         return f"PeakCut couldn't reach {label()}. Check the internet connection" + (" and that Ollama is running." if provider() == "ollama" else ".")
     return ""
 
 
 def note_problem(e):
-    import time
     why = explain(e)
     if why:
         problem.update(text=why, at=time.time())
@@ -213,7 +391,10 @@ def clear_problem():
 
 
 def _fail(r, model):
-    text = r.text[:300].replace(key() or "\0", "<key>")
+    text = r.text[:300]
+    for k in keys():
+        if k:
+            text = text.replace(k, "<key>")
     raise AIError(f"HTTP {r.status_code} {text}")
 
 
@@ -261,11 +442,7 @@ def _json_chunks(text: str):
 
 
 def _parse(text):
-    """The JSON in an answer, even if the model wrapped it in a code fence or a sentence.
-
-    A model that is not careful sometimes puts a sentence in front of the JSON,
-    or a second object after it, or forgets a comma. The JSON is looked for
-    inside the answer rather than demanded of it."""
+    """The JSON in an answer, even if the model wrapped it in a code fence or a sentence."""
     text = (text or "").strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
     out = None
@@ -293,83 +470,155 @@ def _parse(text):
 
 # ---------------------------------------------------------------- one call
 def call(model: str, prompt: str, schema: dict, timeout: float | None = None):
-    """Ask one model. Returns (the parsed JSON answer, tokens sent, tokens written back).
-
-    `timeout` is how long one answer may take. A live stream passes a short one, because a slow
-    answer must not stop the recording."""
+    """Ask one model. Returns (the parsed JSON answer, tokens sent, tokens written back)."""
     how = PROVIDERS[provider()][2]
     return {"gemini": _gemini, "openai": _openai, "anthropic": _anthropic}[how](model, prompt, schema, timeout)
 
 
 def see(prompt: str, image: bytes, timeout: float | None = None) -> tuple[str, int, int]:
-    """Ask one model about one picture: (the answer as text, tokens in, tokens out).
-
-    Nothing is broken by a service that cannot look at pictures, or a model that is only text: the answer
-    comes back empty, or says something the caller does not understand, and the caller carries on without
-    it. The picture is a JPEG, passed as base64 inside the ordinary message."""
+    """Ask one model about one picture: (the answer as text, tokens in, tokens out) with multi-key failover."""
     if not ready() or not image or not models():
         return "", 0, 0
     model = models()[0]
     b64 = base64.b64encode(image).decode()
     how = PROVIDERS[provider()][2]
+    key_pool = get_ordered_keys()
+
     if how == "gemini":
         body = {"contents": [{"role": "user", "parts": [
             {"text": prompt},
             {"inline_data": {"mimeType": "image/jpeg", "data": b64}}]}]}
-        r = httpx.post(f"{base_url()}/{model}:generateContent", json=body,
-                       headers={"x-goog-api-key": key()}, timeout=timeout or 120)
-        if r.status_code != 200:
-            _fail(r, model)
-        data = r.json()
-        text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
-        u = data.get("usageMetadata", {})
-        sent = int(u.get("promptTokenCount") or 0)
-        return text, sent, max(0, int(u.get("totalTokenCount") or 0) - sent)
+        last_r = None
+        for attempt, k in enumerate(key_pool):
+            try:
+                r = httpx.post(f"{base_url()}/{model}:generateContent", json=body,
+                               headers={"x-goog-api-key": k}, timeout=timeout or 120)
+                if r.status_code == 200:
+                    mark_key_success(k)
+                    data = r.json()
+                    text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+                    u = data.get("usageMetadata", {})
+                    sent = int(u.get("promptTokenCount") or 0)
+                    return text, sent, max(0, int(u.get("totalTokenCount") or 0) - sent)
+                last_r = r
+                if is_rate_limit_or_quota_error(r.status_code, r.text):
+                    mark_key_cooldown(k, 60.0, f"see HTTP {r.status_code}")
+                    if attempt < len(key_pool) - 1:
+                        continue
+                _fail(r, model)
+            except (httpx.RequestError, httpx.TimeoutException) as e:
+                mark_key_cooldown(k, 30.0, str(e))
+                if attempt < len(key_pool) - 1:
+                    continue
+        if last_r is not None:
+            _fail(last_r, model)
+        return "", 0, 0
+
     if how == "anthropic":
         body = {"model": model, "max_tokens": 300, "messages": [{"role": "user", "content": [
             {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64}},
             {"type": "text", "text": prompt}]}]}
-        r = httpx.post(f"{base_url()}/messages", json=body, timeout=timeout or 120,
-                       headers={"x-api-key": key(), "anthropic-version": "2023-06-01"})
-        if r.status_code != 200:
-            _fail(r, model)
-        data = r.json()
-        text = "".join(p.get("text", "") for p in data.get("content") or [] if p.get("type") == "text")
-        u = data.get("usage") or {}
-        return text, int(u.get("input_tokens") or 0), int(u.get("output_tokens") or 0)
-    headers = {"Authorization": f"Bearer {key()}"} if key() else {}
+        last_r = None
+        for attempt, k in enumerate(key_pool):
+            try:
+                r = httpx.post(f"{base_url()}/messages", json=body, timeout=timeout or 120,
+                               headers={"x-api-key": k, "anthropic-version": "2023-06-01"})
+                if r.status_code == 200:
+                    mark_key_success(k)
+                    data = r.json()
+                    text = "".join(p.get("text", "") for p in data.get("content") or [] if p.get("type") == "text")
+                    u = data.get("usage") or {}
+                    return text, int(u.get("input_tokens") or 0), int(u.get("output_tokens") or 0)
+                last_r = r
+                if is_rate_limit_or_quota_error(r.status_code, r.text):
+                    mark_key_cooldown(k, 60.0, f"see HTTP {r.status_code}")
+                    if attempt < len(key_pool) - 1:
+                        continue
+                _fail(r, model)
+            except (httpx.RequestError, httpx.TimeoutException) as e:
+                mark_key_cooldown(k, 30.0, str(e))
+                if attempt < len(key_pool) - 1:
+                    continue
+        if last_r is not None:
+            _fail(last_r, model)
+        return "", 0, 0
+
+    last_r = None
     body = {"model": model, "stream": False, "messages": [{"role": "user", "content": [
         {"type": "text", "text": prompt},
         {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b64}}]}]}
-    r = httpx.post(f"{base_url()}/chat/completions", json=body, headers=headers, timeout=timeout or 120)
-    if r.status_code != 200:
-        _fail(r, model)
-    data = _openai_body(r)
-    text = (data["choices"][0]["message"].get("content") or "")
-    u = data.get("usage") or {}
-    return text, int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0)
+    for attempt, k in enumerate(key_pool):
+        headers = {"Authorization": f"Bearer {k}"} if k else {}
+        try:
+            r = httpx.post(f"{base_url()}/chat/completions", json=body, headers=headers, timeout=timeout or 120)
+            if r.status_code == 200:
+                mark_key_success(k)
+                data = _openai_body(r)
+                text = (data["choices"][0]["message"].get("content") or "")
+                u = data.get("usage") or {}
+                return text, int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0)
+            last_r = r
+            if is_rate_limit_or_quota_error(r.status_code, r.text):
+                mark_key_cooldown(k, 60.0, f"see HTTP {r.status_code}")
+                if attempt < len(key_pool) - 1:
+                    continue
+            _fail(r, model)
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            mark_key_cooldown(k, 30.0, str(e))
+            if attempt < len(key_pool) - 1:
+                continue
+    if last_r is not None:
+        _fail(last_r, model)
+    return "", 0, 0
 
 
 def _gemini(model, prompt, schema, timeout=None):
+    """Execute Gemini generateContent with automatic multi-key failover and quota/spike retry."""
     body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0.4, "responseMimeType": "application/json", "responseSchema": schema}}
-    r = httpx.post(f"{base_url()}/{model}:generateContent", json=body, headers={"x-goog-api-key": key()}, timeout=timeout or 120)
-    if r.status_code != 200:
-        _fail(r, model)
-    data = r.json()
-    text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
-    u = data.get("usageMetadata", {})
-    sent = int(u.get("promptTokenCount") or 0)
-    return json.loads(text), sent, max(0, int(u.get("totalTokenCount") or 0) - sent)   # the answer, and any thinking billed with it
+    key_pool = get_ordered_keys()
+    if not key_pool:
+        raise AIError("No Gemini API key available. Paste a working key under Settings, AI.")
+
+    last_r = None
+    last_err = None
+    for attempt, k in enumerate(key_pool):
+        try:
+            r = httpx.post(f"{base_url()}/{model}:generateContent", json=body,
+                           headers={"x-goog-api-key": k}, timeout=timeout or 120)
+            if r.status_code == 200:
+                mark_key_success(k)
+                data = r.json()
+                text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+                u = data.get("usageMetadata", {})
+                sent = int(u.get("promptTokenCount") or 0)
+                return json.loads(text), sent, max(0, int(u.get("totalTokenCount") or 0) - sent)
+
+            last_r = r
+            err_text = r.text
+            is_limit = is_rate_limit_or_quota_error(r.status_code, err_text)
+            is_model_unavail = "no longer available to new users" in err_text.lower()
+            if is_limit or is_model_unavail:
+                mark_key_cooldown(k, 60.0 if is_limit else 300.0, f"HTTP {r.status_code}: {err_text[:80]}")
+                if attempt < len(key_pool) - 1:
+                    print(f"[AI Pool] Rotating to next key (attempt {attempt + 2}/{len(key_pool)})...")
+                    continue
+            _fail(r, model)
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            last_err = e
+            mark_key_cooldown(k, 30.0, f"Network timeout/error: {e}")
+            if attempt < len(key_pool) - 1:
+                continue
+            raise AIError(f"Network error contacting Gemini: {e}")
+
+    if last_r is not None:
+        _fail(last_r, model)
+    if last_err is not None:
+        raise AIError(f"Failed to reach Gemini: {last_err}")
 
 
 def _openai_body(r):
-    """The answer, whether the service sent plain JSON or an event stream.
-
-    Some OpenAI-compatible servers answer with a stream of events unless the
-    request says otherwise, so the answer is read from whichever shape arrived.
-    A model that answers with a tool call instead of a message leaves the JSON in
-    the call's arguments, so that is used too."""
+    """The answer, whether the service sent plain JSON or an event stream."""
     try:
         data = r.json()
     except ValueError:
@@ -378,8 +627,8 @@ def _openai_body(r):
         msg = ch.get("message") or {}
         if (msg.get("content") or "").strip():
             continue
-        for call in msg.get("tool_calls") or []:
-            args = (call.get("function") or {}).get("arguments")
+        for cl in msg.get("tool_calls") or []:
+            args = (cl.get("function") or {}).get("arguments")
             if args:
                 msg["content"] = args
                 break
@@ -405,9 +654,9 @@ def _from_events(text: str) -> dict:
             for piece in ((ch.get("message") or {}), (ch.get("delta") or {})):
                 if piece.get("content"):
                     parts.append(piece["content"])
-                for call in piece.get("tool_calls") or []:
-                    i = call.get("index", 0)
-                    calls[i] = calls.get(i, "") + ((call.get("function") or {}).get("arguments") or "")
+                for cl in piece.get("tool_calls") or []:
+                    i = cl.get("index", 0)
+                    calls[i] = calls.get(i, "") + ((cl.get("function") or {}).get("arguments") or "")
     message = {"content": "".join(parts)}
     if not message["content"] and calls:
         message["content"] = "".join(calls.values())
@@ -415,29 +664,65 @@ def _from_events(text: str) -> dict:
 
 
 def _openai(model, prompt, schema, timeout=None):
-    headers = {"Authorization": f"Bearer {key()}"} if key() else {}
+    """Execute OpenAI-compatible chat completion with multi-key failover."""
     body = {"model": model, "messages": [{"role": "user", "content": _wrapped(prompt, schema)}], "stream": False}
-    # Most services accept these two extras; a few models refuse one of them, so they are dropped on a refusal.
     extras = [{"temperature": 0.4, "response_format": {"type": "json_object"}}, {"response_format": {"type": "json_object"}}, {}]
-    r = None
-    for extra in extras:
-        r = httpx.post(f"{base_url()}/chat/completions", json={**body, **extra}, headers=headers, timeout=timeout or 180)
-        if r.status_code not in (400, 422):
-            break
-    if r.status_code != 200:
-        _fail(r, model)
-    data = _openai_body(r)
-    u = data.get("usage") or {}
-    return _parse(data["choices"][0]["message"].get("content")), int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0)
+    key_pool = get_ordered_keys()
+
+    last_r = None
+    for attempt, k in enumerate(key_pool):
+        headers = {"Authorization": f"Bearer {k}"} if k else {}
+        r = None
+        for extra in extras:
+            try:
+                r = httpx.post(f"{base_url()}/chat/completions", json={**body, **extra}, headers=headers, timeout=timeout or 180)
+                if r.status_code not in (400, 422):
+                    break
+            except (httpx.RequestError, httpx.TimeoutException):
+                break
+        if r is not None and r.status_code == 200:
+            mark_key_success(k)
+            data = _openai_body(r)
+            u = data.get("usage") or {}
+            return _parse(data["choices"][0]["message"].get("content")), int(u.get("prompt_tokens") or 0), int(u.get("completion_tokens") or 0)
+        last_r = r
+        if r is not None and is_rate_limit_or_quota_error(r.status_code, r.text):
+            mark_key_cooldown(k, 60.0, f"HTTP {r.status_code}")
+            if attempt < len(key_pool) - 1:
+                continue
+        if r is not None:
+            _fail(r, model)
+    if last_r is not None:
+        _fail(last_r, model)
+    raise AIError("AI service failed to respond.")
 
 
 def _anthropic(model, prompt, schema, timeout=None):
+    """Execute Anthropic message creation with multi-key failover."""
     body = {"model": model, "max_tokens": 8192, "messages": [{"role": "user", "content": _wrapped(prompt, schema)}]}
-    r = httpx.post(f"{base_url()}/messages", json=body, timeout=timeout or 180,
-                   headers={"x-api-key": key(), "anthropic-version": "2023-06-01"})
-    if r.status_code != 200:
-        _fail(r, model)
-    data = r.json()
-    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
-    u = data.get("usage") or {}
-    return _parse(text), int(u.get("input_tokens") or 0), int(u.get("output_tokens") or 0)
+    key_pool = get_ordered_keys()
+
+    last_r = None
+    for attempt, k in enumerate(key_pool):
+        try:
+            r = httpx.post(f"{base_url()}/messages", json=body, timeout=timeout or 180,
+                           headers={"x-api-key": k, "anthropic-version": "2023-06-01"})
+            if r.status_code == 200:
+                mark_key_success(k)
+                data = r.json()
+                text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+                u = data.get("usage") or {}
+                return _parse(text), int(u.get("input_tokens") or 0), int(u.get("output_tokens") or 0)
+            last_r = r
+            if is_rate_limit_or_quota_error(r.status_code, r.text):
+                mark_key_cooldown(k, 60.0, f"HTTP {r.status_code}")
+                if attempt < len(key_pool) - 1:
+                    continue
+            _fail(r, model)
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            mark_key_cooldown(k, 30.0, str(e))
+            if attempt < len(key_pool) - 1:
+                continue
+    if last_r is not None:
+        _fail(last_r, model)
+    raise AIError("AI service failed to respond.")

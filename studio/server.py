@@ -1309,7 +1309,11 @@ def ai_usage():
 # ---------------------------------------------------------------- the AI key and model, set from the dashboard
 # Only the owner (or an admin, when accounts are on) reaches these. The key is never sent back to the page.
 def _ai_error(e) -> str:
-    return safe.friendly(e, 300).replace(ai.key() or "\0", "<key>")
+    msg = safe.friendly(e, 300)
+    for k in ai.keys():
+        if k:
+            msg = msg.replace(k, "<key>")
+    return msg
 
 
 @app.get("/api/ai")
