@@ -24,10 +24,15 @@ def add(uid: str, job_id: str, clip_id: str, platforms: list = None, meta: dict 
         meta = {}
     
     # Retrieve clip metadata if available
-    job = jobs.get(job_id)
+    job = jobs._jobs.get(job_id) if hasattr(jobs, "_jobs") else None
+    if not job:
+        try:
+            job = jobs.get(job_id)
+        except Exception:
+            job = None
     clip = None
     if job:
-        clip = next((c for c in job.get("clips", []) if c.get("id") == clip_id), None)
+        clip = next((c for c in job.get("clips", []) if str(c.get("id")) == str(clip_id)), None)
         if clip:
             meta.setdefault("title", clip.get("title", ""))
             meta.setdefault("hook", clip.get("hook", ""))
@@ -55,17 +60,42 @@ def add(uid: str, job_id: str, clip_id: str, platforms: list = None, meta: dict 
     return item
 
 
-def queue(uid: str) -> list:
-    """All pending approval items for this user."""
+def _raw_items(uid: str) -> list:
     out = []
     for f in _queue_path(uid).glob("*.json"):
         try:
-            item = json.loads(f.read_text(encoding="utf-8"))
-            if item.get("status") == "pending":
-                out.append(item)
+            out.append(json.loads(f.read_text(encoding="utf-8")))
         except (OSError, ValueError):
             pass
-    return sorted(out, key=lambda x: x.get("created_at", 0), reverse=True)
+    return out
+
+
+def sync_all_ready_clips(uid: str = "u_local") -> int:
+    """Sync all existing finished clips from jobs into the approval queue if not already present."""
+    existing = set()
+    for it in _raw_items(uid):
+        existing.add((it.get("job_id"), str(it.get("clip_id"))))
+
+    added = 0
+    all_j = list(jobs._jobs.values()) if hasattr(jobs, "_jobs") else []
+    for j in all_j:
+        for c in j.get("clips", []):
+            if c.get("status") == "done":
+                pair = (j["id"], str(c.get("id")))
+                if pair not in existing:
+                    add(uid, j["id"], c["id"])
+                    existing.add(pair)
+                    added += 1
+    return added
+
+
+def queue(uid: str) -> list:
+    """All pending approval items for this user."""
+    items = [it for it in _raw_items(uid) if it.get("status") == "pending"]
+    if not items:
+        sync_all_ready_clips(uid)
+        items = [it for it in _raw_items(uid) if it.get("status") == "pending"]
+    return sorted(items, key=lambda x: x.get("created_at", 0), reverse=True)
 
 
 def get(uid: str, item_id: str) -> dict | None:
@@ -98,9 +128,14 @@ def approve(uid: str, item_id: str, platforms: list = None, meta: dict = None) -
         p.write_text(json.dumps(item, indent=2), encoding="utf-8")
         
     # Trigger publishing to approved platforms
-    job = jobs.get(item["job_id"])
+    job = jobs._jobs.get(item["job_id"]) if hasattr(jobs, "_jobs") else None
+    if not job:
+        try:
+            job = jobs.get(item["job_id"])
+        except Exception:
+            job = None
     if job:
-        clip = next((c for c in job.get("clips", []) if c.get("id") == item["clip_id"]), None)
+        clip = next((c for c in job.get("clips", []) if str(c.get("id")) == str(item["clip_id"])), None)
         if clip:
             # Update clip with any edited metadata
             if meta:

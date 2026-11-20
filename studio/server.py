@@ -946,6 +946,7 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
 
 @app.post("/api/jobs/{jid}/clips/{cid}/seo")
 def generate_clip_seo(jid: str, cid: str, body: dict = Body(default={})):
+    from . import brain
     job = _job_or_404(jid)
     clip = next((c for c in job["clips"] if c["id"] == cid), None)
     if not clip:

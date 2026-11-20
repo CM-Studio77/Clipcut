@@ -1435,7 +1435,7 @@ function go(v, tab, fromHistory) {
         <button type="button" class="source-pill up" onclick="document.querySelector('[data-act=pickfile]')?.click()"><span class="s-icon">📁</span>Upload File</button>
       </div>
       <div id="add"></div></section>` : "";
-  if (v === "overview") view.innerHTML = `<div id="ov"></div>`;
+  if (v === "overview") view.innerHTML = `<div id="jobs"></div><div id="ov"></div>`;
   else if (v === "live-studio") { view.innerHTML = `<div id="liveStudioSlot"></div>`; drawLiveStudio(); }
   else if (v === "approval") { view.innerHTML = `<div id="approvalSlot"></div>`; drawApprovalCenter(); }
   else if (v === "pub-history") { view.innerHTML = `<div id="pubHistorySlot"></div>`; drawPubHistory(); }
@@ -1922,6 +1922,7 @@ function drawJobs() {
     if (!liveBox.querySelector(".pick.open")) put(liveBox, lj ? liveHtml(lj) : "");  // don't redraw under an open menu
     list = list.filter(j => j.status !== "live"); }
   if (!list.length) {
+    if (S.view === "overview") { root.innerHTML = ""; return; }
     root.querySelectorAll("section").forEach(e => e.remove());
     if (!$(".empty", root)) root.innerHTML = `<div class="empty"><img src="/brand/favicon.svg" alt=""><b>${cid ? "No clips for this creator yet" : "No videos yet"}</b>${cid ? "Start recording their stream, or paste a link to one of their videos above." : "Paste a link above and the studio will find the best moments and turn them into clips."}</div>`;
     return;
