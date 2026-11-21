@@ -134,7 +134,7 @@ class Gate:
             # so another website cannot reach it through a made-up name that points at this machine.
             if not _own_address(req.headers.get("host", "")):
                 return await deny(403, "Open PeakCut by its own address.")
-            if path == "/" or path == "/reset" or path.startswith("/auth/"):
+            if path == "/reset" or path.startswith("/auth/"):
                 return await deny(303, "", redirect="/app")
             if path.startswith("/api/auth/") and path != "/api/auth/me":
                 return await deny(404, "Not Found")
