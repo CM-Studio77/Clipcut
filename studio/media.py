@@ -94,6 +94,16 @@ class _Quiet:
     def error(self, m): pass
 
 
+def cookie_opts() -> dict:
+    f = getattr(config, "YT_COOKIES", config.DATA_DIR / "youtube-cookies.txt")
+    if f.is_file():
+        return {"cookiefile": str(f)}
+    legacy = config.DATA_DIR / "cookies.txt"
+    if legacy.is_file():
+        return {"cookiefile": str(legacy)}
+    return {}
+
+
 def _ydl(opts):
     import yt_dlp
     # a channel or playlist link is answered as "a list" straight away, never walked video by video
@@ -112,9 +122,7 @@ def _ydl(opts):
             }
         },
     }
-    cookie_file = config.DATA_DIR / "cookies.txt"
-    if cookie_file.is_file():
-        base["cookiefile"] = str(cookie_file)
+    base.update(cookie_opts())
     base.update(opts)
     return yt_dlp.YoutubeDL(base)
 

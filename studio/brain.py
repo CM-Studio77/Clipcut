@@ -162,16 +162,12 @@ def _tidy(c, s, e, game=None, uploader=None, title_hint=None):
                 yt_tags.append(nt)
 
     words = c.get("highlight_words") if isinstance(c.get("highlight_words"), list) else []
-    
-    t_str = roman.to_roman(_text(c.get("title"), 100))
-    if (s or e) and "#Shorts" not in t_str and "#shorts" not in t_str and len(t_str) <= 60:
-        t_str = f"{t_str} #Shorts"
 
     return {
         "start": s, "end": e, "score": max(0, min(100, int(_num(c.get("score"))))),
         "category": cat if cat in CATEGORIES else "other",
         "hook": roman.to_roman(_text(c.get("hook"), 60)).upper(),
-        "title": t_str,
+        "title": roman.to_roman(_text(c.get("title"), 100)),
         "description": roman.to_roman(_text(c.get("description"), 500)),
         "hashtags": [t for t in tags if t][:12],
         "tags": [t for t in yt_tags if t][:20],
@@ -426,7 +422,7 @@ def find_clips(words, db, duration, title="", uploader="", max_clips=6, min_len=
             continue
         prompt = (HEAD.format(title=_safe(title) or "unknown", uploader=_safe(uploader) or "unknown", n=per_window)
                   + extra
-                  + RULES.format(min_len=min_len, max_len=max_len, transcript=_fmt(chunk)))
+                  + _rules(min_len, max_len, _fmt(chunk)))
         try:
             out, used_model, spent = ask_ai(prompt, purpose="Video: finding clips")
             tokens += spent

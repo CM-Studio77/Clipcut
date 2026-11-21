@@ -164,7 +164,7 @@ def test_approval_center_workflow():
             "title": test_title,
             "hook": "Bhai kya reaction tha!",
             "description": "Full gameplay highlight with Hinglish captions",
-            "hashtags": ["#gaming", "#viral", "#clipcut"]
+            "hashtags": ["#gaming", "#viral", "#peakcut"]
         }
     )
     item_id = item["id"]
@@ -252,7 +252,7 @@ def test_frontend_interface():
 # ==============================================================================
 if __name__ == "__main__":
     print("\n" + "="*80)
-    print(" ⚡ CLIPCUT COMPLETE FEATURE VERIFICATION SUITE")
+    print(" ⚡ PEAKCUT COMPLETE FEATURE VERIFICATION SUITE")
     print("="*80 + "\n")
     
     test_system_status()

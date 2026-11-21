@@ -35,7 +35,7 @@ _WORDS = {
     "कौन": "kaun", "कैसे": "kaise", "कैसा": "kaisa", "कैसी": "kaisi", "कब": "kab", "जब": "jab", "तब": "tab",
     "अब": "ab", "अगर": "agar", "लेकिन": "lekin", "मगर": "magar", "फिर": "phir", "एक": "ek", "दो": "do",
     "तीन": "teen", "चार": "chaar", "पांच": "paanch", "पैसा": "paisa", "पैसे": "paise", "वीडियो": "video",
-    "चैनल": "channel", "लाइव": "live", "स्ट्रीम": "stream", "गेम": "game", "मजा": "maza", "आया": "aaya",
+    "चैनल": "channel", "लाइव": "live", "स्ट्रीम": "stream", "मजा": "maza", "आया": "aaya",
     "आए": "aaye", "आओ": "aao", "आएगा": "aayega", "जाएगा": "jaayega", "खेलेंगे": "khelenge", "करेंगे": "karenge",
     "करूंगा": "karunga", "करूंगी": "karungi", "होगा": "hoga", "होगी": "hogi", "होंगे": "honge", "रुको": "ruko",
     "चल": "chal", "चलो": "chalo", "नमस्ते": "namaste",
@@ -205,8 +205,8 @@ def _urdu_word(w: str) -> str:
         if ch == "ھ":                     # do chashmi he: the "h" of bh, ph, kh, chh...
             out.append("h")
             continue
-        if ch in "اآ":
-            out.append("aa" if ch == "آ" else "a")
+        if ch in "اآأإ":
+            out.append("aa" if ch == "آ" else "i" if ch == "إ" else "a")
             prev_cons = False
             continue
         if ch in "وؤ":

@@ -324,8 +324,16 @@ def list_models(provider_id=None, address=None, with_key=None) -> list:
         if r.status_code == 200:
             data = r.json()
             if how == "gemini":
-                found = [m.get("name", "").split("/")[-1] for m in data.get("models", [])
-                         if "generateContent" in (m.get("supportedGenerationMethods") or [])]
+                found = []
+                for m in data.get("models", []):
+                    name = m.get("name", "").split("/")[-1]
+                    methods = m.get("supportedGenerationMethods") or []
+                    if "generateContent" not in methods:
+                        continue
+                    low = name.lower()
+                    if any(x in low for x in ("-tts", "image", "embedding", "imagen")) or low == "aqa":
+                        continue
+                    found.append(name)
             else:
                 found = [m.get("id", "") for m in data.get("data", []) if isinstance(m, dict)]
             return sorted({m for m in found if m})[:400]
@@ -371,10 +379,12 @@ def explain(e) -> str:
     """What went wrong with an AI call, in words the owner can act on."""
     text, low = str(e), str(e).lower()
     name = (models() or ["?"])[0]
-    if "404" in text or "not found" in low or "does not exist" in low or "unknown model" in low or "not_found" in low:
-        return f"{label()} doesn't know the model \"{name}\". Open Settings, AI, press Find models and pick one from the list."
-    if "401" in text or "403" in text or "api key" in low or "api_key" in low or "unauthorized" in low or "permission" in low:
+    if "api key" in low or "api_key" in low or "unauthorized" in low or "401" in text or "403" in text or "permission" in low:
         return f"{label()} refused the key. Paste a working key under Settings, AI."
+    if "no longer available to new users" in low or "retired" in low:
+        return f"{label()} says the model \"{name}\" is retired. Open Settings, AI, press Find models and pick a newer one."
+    if (text.startswith("HTTP 404") or " 404 " in text) and "model" in low and any(w in low for w in ("not found", "does not exist", "unknown", "not supported")):
+        return f"{label()} doesn't know the model \"{name}\". Open Settings, AI, press Find models and pick one from the list."
     if "429" in text or "quota" in low or "rate limit" in low or "exhausted" in low:
         pool_len = len(keys())
         if pool_len > 1:
@@ -501,7 +511,7 @@ def see(prompt: str, image: bytes, timeout: float | None = None) -> tuple[str, i
     model = models()[0]
     b64 = base64.b64encode(image).decode()
     how = PROVIDERS[provider()][2]
-    key_pool = get_ordered_keys()
+    key_pool = [k for k in get_ordered_keys() if k] or [""]
 
     if how == "gemini":
         body = {"contents": [{"role": "user", "parts": [
@@ -595,15 +605,16 @@ def _gemini(model, prompt, schema, timeout=None):
     """Execute Gemini generateContent with automatic multi-key failover and quota/spike retry."""
     body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0.4, "responseMimeType": "application/json", "responseSchema": schema}}
-    key_pool = get_ordered_keys()
+    key_pool = [k for k in get_ordered_keys() if k]
     if not key_pool:
         raise AIError("No Gemini API key available. Paste a working key under Settings, AI.")
 
+    clean_model = model.split("/")[-1] if model.startswith("models/") else model
     last_r = None
     last_err = None
     for attempt, k in enumerate(key_pool):
         try:
-            r = httpx.post(f"{base_url()}/{model}:generateContent", json=body,
+            r = httpx.post(f"{base_url()}/{clean_model}:generateContent", json=body,
                            headers={"x-goog-api-key": k}, timeout=timeout or 120)
             if r.status_code == 200:
                 mark_key_success(k)
@@ -615,6 +626,19 @@ def _gemini(model, prompt, schema, timeout=None):
 
             last_r = r
             err_text = r.text
+            if r.status_code == 400 and any(s in err_text for s in ("JSON mode is not enabled", "response_schema", "responseSchema")):
+                fallback_body = {"contents": [{"role": "user", "parts": [{"text": _wrapped(prompt, schema)}]}]}
+                r2 = httpx.post(f"{base_url()}/{clean_model}:generateContent", json=fallback_body,
+                                headers={"x-goog-api-key": k}, timeout=timeout or 120)
+                if r2.status_code == 200:
+                    mark_key_success(k)
+                    data = r2.json()
+                    text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+                    u = data.get("usageMetadata", {})
+                    sent = int(u.get("promptTokenCount") or 0)
+                    return _parse(text), sent, max(0, int(u.get("totalTokenCount") or 0) - sent)
+                last_r = r2
+                err_text = r2.text
             is_limit = is_rate_limit_or_quota_error(r.status_code, err_text)
             is_model_unavail = "no longer available to new users" in err_text.lower()
             if is_limit or is_model_unavail:
@@ -686,7 +710,7 @@ def _openai(model, prompt, schema, timeout=None):
     """Execute OpenAI-compatible chat completion with multi-key failover."""
     body = {"model": model, "messages": [{"role": "user", "content": _wrapped(prompt, schema)}], "stream": False}
     extras = [{"temperature": 0.4, "response_format": {"type": "json_object"}}, {"response_format": {"type": "json_object"}}, {}]
-    key_pool = get_ordered_keys()
+    key_pool = [k for k in get_ordered_keys() if k] or [""]
 
     last_r = None
     for attempt, k in enumerate(key_pool):
@@ -719,7 +743,7 @@ def _openai(model, prompt, schema, timeout=None):
 def _anthropic(model, prompt, schema, timeout=None):
     """Execute Anthropic message creation with multi-key failover."""
     body = {"model": model, "max_tokens": 8192, "messages": [{"role": "user", "content": _wrapped(prompt, schema)}]}
-    key_pool = get_ordered_keys()
+    key_pool = [k for k in get_ordered_keys() if k] or [""]
 
     last_r = None
     for attempt, k in enumerate(key_pool):

@@ -1,9 +1,9 @@
-# Working on ClipCut
+# Working on PeakCut
 
 A developer guide for contributors and AI coding assistants.
 
-## About ClipCut
-ClipCut is an AI-powered automated video clipper and short-form content generator developed by CM Studio. It transforms long-form streams (YouTube, Twitch, Kick) and uploaded video files into optimized, captioned vertical clips (9:16) for YouTube Shorts, Instagram Reels, and TikTok.
+## About PeakCut
+PeakCut is an AI-powered automated video clipper and short-form content generator developed by CM Studio. It transforms long-form streams (YouTube, Twitch, Kick) and uploaded video files into optimized, captioned vertical clips (9:16) for YouTube Shorts, Instagram Reels, and TikTok.
 
 ## Run and test
 - Run locally: `python -m studio.server` (settings from `.env`). Requires Python 3.10+ and `ffmpeg`.
@@ -23,5 +23,5 @@ ClipCut is an AI-powered automated video clipper and short-form content generato
 | `studio/transcribe.py` | Speech-to-text engine using Sherpa-ONNX / Whisper |
 | `studio/render.py` | Video reframing, layout generation, and ASS caption burn-in |
 | `studio/posting.py` | YouTube, Instagram, and TikTok scheduled uploader |
-| `web/index.html` | ClipCut Studio single-page application |
-| `web/landing.html` | ClipCut marketing and landing page |
+| `web/index.html` | PeakCut Studio single-page application |
+| `web/landing.html` | PeakCut marketing and landing page |

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ ClipCut — AI Video & Shorts Studio
+# ⚡ PeakCut — AI Video & Shorts Studio
 
 ### *Turn Long Videos & Live Streams into Viral, Scroll-Stopping 9:16 Shorts*
 
@@ -8,7 +8,7 @@
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3B82F6.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Whisper ASR](https://img.shields.io/badge/Whisper-Multilingual_ASR-06B6D4.svg?style=for-the-badge)](https://github.com/SYSTRAN/faster-whisper)
 [![Docker Ready](https://img.shields.io/badge/Docker-Containerized-22D3EE.svg?style=for-the-badge&logo=docker&logoColor=white)](Dockerfile)
-[![Creator](https://img.shields.io/badge/Maintained_by-CM_Studio-10B981.svg?style=for-the-badge)](https://github.com/CM-Studio77/Clipcut)
+[![Creator](https://img.shields.io/badge/Maintained_by-CM_Studio-10B981.svg?style=for-the-badge)](https://github.com/CM-Studio77/PeakCut)
 
 <br/>
 
@@ -28,9 +28,9 @@
 
 ---
 
-## 🌟 What is ClipCut?
+## 🌟 What is PeakCut?
 
-**ClipCut** is a production-grade, self-hosted AI studio that transforms long videos (YouTube, Twitch, Kick, local files) and continuous live streams into high-retention, viral vertical shorts (9:16) for **TikTok, Instagram Reels, and YouTube Shorts**.
+**PeakCut** is a production-grade, self-hosted AI studio that transforms long videos (YouTube, Twitch, Kick, local files) and continuous live streams into high-retention, viral vertical shorts (9:16) for **TikTok, Instagram Reels, and YouTube Shorts**.
 
 Featuring built-in **Faster-Whisper ASR**, automated **Facecam & Gameplay split layouts**, natural **Hindi / Hinglish transliteration**, dynamic animated captions, and intelligent hook discovery powered by Gemini, OpenAI, Claude, or local Ollama.
 
@@ -53,7 +53,7 @@ Featuring built-in **Faster-Whisper ASR**, automated **Facecam & Gameplay split 
 
 ## 🎮 Dual-Layer Facecam Layouts
 
-ClipCut provides 6 intelligent layout modes built specifically for gamers, podcasters, and streamers:
+PeakCut provides 6 intelligent layout modes built specifically for gamers, podcasters, and streamers:
 
 ### 1. `split_top` — Facecam on Top, Gameplay on Bottom
 ```
@@ -100,7 +100,7 @@ ClipCut provides 6 intelligent layout modes built specifically for gamers, podca
 
 ## 🇮🇳 Multilingual Hindi & Hinglish Whisper Engine
 
-ClipCut features an integrated **Faster-Whisper** engine with a dedicated **Hindi-to-Hinglish transliterator** designed for Indian gaming creators and vloggers:
+PeakCut features an integrated **Faster-Whisper** engine with a dedicated **Hindi-to-Hinglish transliterator** designed for Indian gaming creators and vloggers:
 
 1. **Auto-Detect or Select Language**:
    - `auto`: Automatic language detection.
@@ -137,8 +137,8 @@ ClipCut features an integrated **Faster-Whisper** engine with a dedicated **Hind
 ### 2. Clone & Setup
 
 ```bash
-git clone https://github.com/CM-Studio77/Clipcut.git
-cd Clipcut
+git clone https://github.com/CM-Studio77/PeakCut.git
+cd PeakCut
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -158,7 +158,7 @@ Copy `.env.example` to `.env`:
 cp .env.example .env
 ```
 Add your AI key (e.g. `GEMINI_API_KEY=...` or `OPENAI_API_KEY=...`).  
-*Note: ClipCut works even without AI keys using built-in audio loudness peak detection!*
+*Note: PeakCut works even without AI keys using built-in audio loudness peak detection!*
 
 ### 4. Run the Studio
 
@@ -184,7 +184,7 @@ Access the studio at `http://localhost:8765`.
 
 ## 🔴 Autonomous AI Live Stream Platform & Live Studio
 
-ClipCut includes a complete autonomous live stream understanding and clipping system:
+PeakCut includes a complete autonomous live stream understanding and clipping system:
 
 ### 1. 📺 Live Studio Workspace
 - **Real-Time Stream Monitoring**: Connect live YouTube, Twitch, Kick, or RTMP/SRT streams with instant embedding and playback.
@@ -236,7 +236,7 @@ python tests/test_live_autonomous_system.py
 
 ## 🎨 UI/UX Moodboard & Design Tour
 
-The ClipCut design system is inspired by cutting-edge cyber creator tools:
+The PeakCut design system is inspired by cutting-edge cyber creator tools:
 - **01. Landing Hero**: 3D perspective phone mockup with live caption switcher.
 - **02. Features Bento**: 6-card feature matrix highlighting AI Detection & Facecam Split.
 - **03. Transparent Pricing**: Free ($0), Creator ($9.99/mo), and Studio ($24.99/mo).
@@ -251,7 +251,7 @@ The ClipCut design system is inspired by cutting-edge cyber creator tools:
 ## 👥 Authors & Maintainers
 
 - **CM Studio** — [nk9504858@gmail.com](mailto:nk9504858@gmail.com)
-- **Repository**: [https://github.com/CM-Studio77/Clipcut](https://github.com/CM-Studio77/Clipcut)
+- **Repository**: [https://github.com/CM-Studio77/PeakCut](https://github.com/CM-Studio77/PeakCut)
 
 ---
 

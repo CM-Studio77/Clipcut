@@ -1,6 +1,6 @@
-# Deploying ClipCut to a Server
+# Deploying PeakCut to a Server
 
-ClipCut runs seamlessly as three containers on any Linux server: the ClipCut web application, PostgreSQL database, and Caddy (automatic HTTPS reverse proxy).
+PeakCut runs seamlessly as three containers on any Linux server: the PeakCut web application, PostgreSQL database, and Caddy (automatic HTTPS reverse proxy).
 
 ## Hardware & System Requirements
 - **OS**: Ubuntu 22.04 / 24.04 LTS (recommended) with Docker & Docker Compose.
@@ -13,8 +13,8 @@ ClipCut runs seamlessly as three containers on any Linux server: the ClipCut web
 
 1. Clone the repository on your server:
    ```bash
-   git clone https://github.com/CM-Studio77/Clipcut.git
-   cd Clipcut
+   git clone https://github.com/CM-Studio77/PeakCut.git
+   cd PeakCut
    ```
 
 2. Create and customize your `.env` configuration:

@@ -42,6 +42,13 @@ def _trim_names(users: dict, second: int, kept: int) -> int:
     return second
 
 
+_PLAIN_STRIP = re.compile(r"[\s\W_\u064b-\u0652\u0640]+", re.UNICODE)
+
+
+def _plain(text: str) -> str:
+    return _PLAIN_STRIP.sub("", str(text or "")).lower()
+
+
 def media_safe(e) -> str:
     from . import safe
     return safe.friendly(e, 300)
@@ -92,7 +99,10 @@ def resolve(url: str) -> dict:
     title = info.get("title") or ""
     if "(live)" in title and info.get("description"):  # Twitch puts the real stream title here
         title = str(info["description"]).splitlines()[0][:120]
-    return {"urls": [f["url"] for f in fmts], "title": title,
+    urls = [f["url"] for f in fmts if isinstance(f, dict) and f.get("url")]
+    if not urls:
+        raise NotLive("No playable stream address was found.")
+    return {"urls": urls, "title": title,
             "uploader": info.get("uploader") or info.get("channel") or ""}
 
 
@@ -244,6 +254,10 @@ class Session:
         jobs.save(self.job)
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
+            try:
+                self.proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
 
     def _ingest(self):
         """Record the stream. However this ends, even when ffmpeg cannot start at all, the session is marked as
@@ -269,6 +283,8 @@ class Session:
                     break
                 self.stop_flag.wait(10)
                 continue
+            if self.stop_flag.is_set():
+                break
             if not self.job.get("uploader"):
                 self.job.update(title=info["title"], uploader=info["uploader"])
             self.part += 1
@@ -300,7 +316,11 @@ class Session:
                         self.pending += data
                         self.samples += len(data) // 2
                         self.db.append(level)
-                self.proc.wait()
+                try:
+                    self.proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.proc.kill()
+                    self.proc.wait()
             fails = 0 if got > SR * 2 * 20 else fails + 1
             if fails >= 3:
                 break
@@ -624,13 +644,12 @@ class Session:
                 # Someone asked for this clip by hand. A slow or broken AI costs it its hook, not the clip.
                 self.job["ai"]["last_error"] = str(e)[-200:]
                 words_list = text.split()
-                hook = " ".join(words_list[:4]).upper() if words_list else "EPIC REACTION"
                 clean_title = (self.job.get("title") or "Live Stream Highlight").split("202")[0].strip()
                 c = {
-                    "score": 92,
+                    "score": 85,
                     "category": "reaction",
-                    "hook": hook,
-                    "title": f"{clean_title} - Insane Live Reaction! 😱 #Shorts",
+                    "hook": "",
+                    "title": f"{clean_title} - Insane Live Reaction! 😱 #Shorts" if clean_title else self.job.get("title", ""),
                     "description": f"Unbelievable reaction on {self.job.get('uploader') or 'streamer'}'s live stream: '{text[:120]}...'. Like and subscribe for more!",
                     "hashtags": ["Shorts", "ViralShorts", "Trending", "LiveClips", "Reels"],
                     "tags": ["shorts", "viral", "live", "trending", "reaction"],
@@ -886,6 +905,10 @@ def recover(job):
 
 
 def start_session(creator: dict, url=None) -> dict:
+    lang = (creator.get("lang") or "en").lower()
+    from . import fetch_model
+    if lang != "en" and not fetch_model.ready(lang):
+        raise ValueError(f"Speech models for {fetch_model.MODELS.get(lang, (lang.title(),))[0]} are not installed yet. Open Settings, Speech models to install it.")
     url = normalize(url or creator.get("channel") or "")
     if not re.match(r"^https?://[^/]+\.[^/]+/", url + "/"):
         raise ValueError("Add this creator's channel link first.")

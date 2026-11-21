@@ -143,7 +143,7 @@ def _format_youtube_caption(clip, creator):
     if desc:
         parts.append(desc)
     parts.append("━━━━━━━━━━━━━━━━━━━━━")
-    parts.append("🎬 Full live stream highlight extracted with ClipCut AI.")
+    parts.append("🎬 Full live stream highlight extracted with PeakCut AI.")
     parts.append("🔔 Subscribe & turn on notifications for daily viral clips!")
     parts.append("━━━━━━━━━━━━━━━━━━━━━")
     ht_line = " ".join("#" + h.lstrip("#") for h in tags)

@@ -4,16 +4,16 @@
 **Target Milestone**: Milestone 1 (Architectural Blueprint & Design System Specification)  
 **Workspace Directory**: `C:\Users\Kesha\Downloads\ai\PeakCut`  
 **Status**: APPROVED SPECIFICATION  
-**Primary Deliverable For**: Clipcut AI Creator Workstation Transformation  
+**Primary Deliverable For**: PeakCut AI Creator Workstation Transformation  
 
 ---
 
 ## 1. Executive Summary & Design Vision
 
 ### 1.1 The Transformation Imperative
-Clipcut (PeakCut) is transitioning from a traditional, fragmented multi-page web application into a **unified, high-density, pro-grade AI Studio Workstation**. Previously, video clipping, live stream monitoring, telemetry analysis, human approval, and social media publishing operated across disconnected routes (`/app/live-studio`, `/app/approval`, `/app/history`, and creator sub-tabs). This disjointed layout imposed significant cognitive friction, requiring creators and editors to constantly toggle views, lose track of real-time stream events, and wait on non-co-located interfaces.
+PeakCut (PeakCut) is transitioning from a traditional, fragmented multi-page web application into a **unified, high-density, pro-grade AI Studio Workstation**. Previously, video clipping, live stream monitoring, telemetry analysis, human approval, and social media publishing operated across disconnected routes (`/app/live-studio`, `/app/approval`, `/app/history`, and creator sub-tabs). This disjointed layout imposed significant cognitive friction, requiring creators and editors to constantly toggle views, lose track of real-time stream events, and wait on non-co-located interfaces.
 
-The next-generation Clipcut Workstation introduces an **ergonomic, multi-pane Command Center** tailored for high-volume content creators, gaming broadcasters, and social video editing teams. Broadcasters can monitor raw 16:9 live streams, preview synchronized 9:16 vertical shorts in real time, observe instant audio loudness jumps and chat sentiment velocity, inspect multimodal AI highlight candidates on an interactive multi-track timeline, and dispatch approved shorts across TikTok, YouTube Shorts, Instagram Reels, and Facebook Reels in a single click—all within a unified, responsive interface.
+The next-generation PeakCut Workstation introduces an **ergonomic, multi-pane Command Center** tailored for high-volume content creators, gaming broadcasters, and social video editing teams. Broadcasters can monitor raw 16:9 live streams, preview synchronized 9:16 vertical shorts in real time, observe instant audio loudness jumps and chat sentiment velocity, inspect multimodal AI highlight candidates on an interactive multi-track timeline, and dispatch approved shorts across TikTok, YouTube Shorts, Instagram Reels, and Facebook Reels in a single click—all within a unified, responsive interface.
 
 ### 1.2 Core Architectural Principles
 1. **Zero-Latency Ergonomic Density**: Maximize actionable surface area. High-frequency telemetry (loudness meters, chat velocity bursts, AI virality scores) and preview canvases are co-located so the user never leaves the live monitoring cockpit.
@@ -695,8 +695,8 @@ The refactored workstation shell inside `web/index.html` preserves the top-level
   <!-- Collapsible Obsidian Sidebar -->
   <aside class="side" aria-label="Sidebar">
     <div class="side-head">
-      <img class="logo" src="/brand/logo.svg" alt="ClipCut">
-      <img class="mark" src="/brand/favicon.svg" alt="ClipCut">
+      <img class="logo" src="/brand/logo.svg" alt="PeakCut">
+      <img class="mark" src="/brand/favicon.svg" alt="PeakCut">
       <button class="icon-btn collapse" data-act="collapse" id="collapseBtn"></button>
     </div>
     <nav class="nav" id="nav" aria-label="Main Navigation"></nav>

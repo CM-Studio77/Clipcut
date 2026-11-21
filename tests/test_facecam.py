@@ -6,6 +6,7 @@ border that stays in the same place in every frame.
 Runs against the code directly, with its own empty data folder."""
 import os, shutil, subprocess, sys, tempfile
 os.environ["PEAKCUT_DATA"] = tempfile.mkdtemp(prefix="pc-facecam-")
+os.environ.update(PEAKCUT_AI_KEY="", PEAKCUT_AI_KEY_FILE="", PEAKCUT_AI_MODELS="")
 sys.path.insert(0, ".")
 from studio import facecam, render
 fails = []

@@ -94,7 +94,7 @@ def _peaks(profile: np.ndarray, limit: int) -> list[tuple[int, float]]:
     med = float(np.median(profile)) or 1.0
     out = []
     for i in range(1, len(profile) - 1):
-        if profile[i] >= profile[i - 1] and profile[i] > profile[i + 1] and profile[i] > EDGE * med:
+        if profile[i] >= profile[i - 1] and profile[i] > profile[i + 1] and profile[i] > EDGE * med and profile[i] >= 15.0:
             out.append((i, float(profile[i] / med)))
     return sorted(out, key=lambda p: -p[1])[:limit]
 
@@ -145,7 +145,7 @@ def _plausible(x0, y0, x1, y1, still, light, game, share=STILL_SHARE):
         return None
     cut = max(STILL_MIN, STILL_FRAC * game)
     moving = float(np.median(inside))
-    if moving > cut:
+    if moving >= game or moving > cut:
         return None                    # it changes with the game: it is the game
     if float((inside > cut).mean()) > share:
         return None                    # a good part of it moves: the game is showing through
@@ -276,7 +276,7 @@ def _finish(path: str | Path, found: dict, w: int, h: int, still: np.ndarray) ->
     game = float(np.median(still))
     moving = float(np.median(inside)) if inside.size else 99.0
     # sure of it when the picture inside hardly moves while the game around it is racing
-    conf = "high" if moving <= max(3.0, 0.25 * game) else "low"
+    conf = "high" if (moving <= max(3.0, 0.25 * game) and moving < game) else "low"
     return {"x": int(round(x0)), "y": int(round(y0)), "w": int(round(x1 - x0)), "h": int(round(y1 - y0)),
             "corner": _corner(x0, y0, x1, y1, w, h), "score": found.get("score", 0.0), "conf": conf}
 

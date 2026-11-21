@@ -1,4 +1,4 @@
-# ClipCut: AI Video Clipping & Shorts Studio by CM Studio
+# PeakCut: AI Video Clipping & Shorts Studio
 FROM python:3.11-slim
 
 RUN apt-get update \

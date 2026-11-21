@@ -1,9 +1,10 @@
-"""ClipCut web server. Run with:  python -m studio.server
+"""PeakCut web server. Run with:  python -m studio.server
 
 Public pages:  /  /login  /signup          The app:  /app  (signed-in users only)
 Everything under /api, /media and /oauth needs a session, except /api/auth/* and /api/public."""
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
@@ -34,11 +35,12 @@ def _quiet(fn):
         print(f"  {e}", flush=True)
 
 
-app = FastAPI(title="ClipCut", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="PeakCut", docs_url=None, redoc_url=None, openapi_url=None)
 WEB = config.ROOT / "web"
 OPEN = ("/api/auth/", "/pub/", "/api/public", "/auth/google/", "/auth/verify", "/brand/", "/assets/", "/healthz", "/favicon.ico", "/robots.txt", "/sitemap.xml")
 PAGES = {"/": "landing.html", "/login": "auth.html", "/signup": "auth.html", "/reset": "reset.html",
-         "/privacy": "legal.html", "/terms": "legal.html", "/acceptable-use": "legal.html"}
+         "/privacy": "legal.html", "/terms": "legal.html", "/acceptable-use": "legal.html",
+         "/refunds": "legal.html", "/data-deletion": "legal.html"}
 VIDEO_TYPES = {".mp4", ".mov", ".mkv", ".webm", ".m4v", ".ts", ".flv"}
 CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; "
@@ -73,7 +75,7 @@ def _startup():
     live.start()
     posting.start()
     from . import updates
-    updates.start()                  # looks for a newer ClipCut every minute, in the background
+    updates.start()                  # looks for a newer PeakCut every minute, in the background
 
 
 # ================================================================ the gate: who is asking, and are they allowed
@@ -131,7 +133,7 @@ class Gate:
             # must have been asked for by its real address (a number, "localhost", or the address in settings),
             # so another website cannot reach it through a made-up name that points at this machine.
             if not _own_address(req.headers.get("host", "")):
-                return await deny(403, "Open ClipCut by its own address.")
+                return await deny(403, "Open PeakCut by its own address.")
             if path == "/" or path == "/reset" or path.startswith("/auth/"):
                 return await deny(303, "", redirect="/app")
             if path.startswith("/api/auth/") and path != "/api/auth/me":
@@ -230,6 +232,23 @@ app.add_middleware(Compress)
 # Cloudflare's published address ranges (cloudflare.com/ips). PEAKCUT_CDN_RANGES replaces them if they ever change.
 _CDN_RANGES = None
 
+_PRIVATE_NETS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("::1/128"),
+]
+
+
+def _is_private_proxy(addr: str) -> bool:
+    try:
+        ip = ipaddress.ip_address(addr)
+        return any(ip in net for net in _PRIVATE_NETS)
+    except ValueError:
+        return False
+
 
 def _from_cdn(addr: str) -> bool:
     global _CDN_RANGES
@@ -256,16 +275,21 @@ def _ip(request: Request) -> str:
 
     The proxy adds the address it saw at the END of X-Forwarded-For. Everything before that was written by the
     visitor, so only the last entry is believed."""
-    fwd = request.headers.get("x-forwarded-for", "")
-    peer = (fwd.split(",")[-1].strip() if fwd and config.env("PEAKCUT_TRUST_PROXY") else "") or (request.client.host if request.client else "")
+    direct = request.client.host if request.client else ""
+    peer = direct
+    if (config.env("PEAKCUT_TRUST_PROXY") == "1") and _is_private_proxy(direct):
+        raw_list = request.headers.getlist("x-forwarded-for") if hasattr(request.headers, "getlist") else [request.headers.get("x-forwarded-for", "")]
+        hops = [h.strip() for raw in raw_list if raw for h in raw.split(",") if h.strip()]
+        if hops:
+            peer = hops[-1]
     named = config.env("PEAKCUT_CLIENT_IP_HEADER")
     if named and request.headers.get(named) and _from_cdn(peer):
         return request.headers[named].split(",")[0].strip()[:64]
-    return peer
+    return peer or direct
 
 
 def _from_here(req, must_say=False) -> bool:
-    """Did this change come from ClipCut's own page, and not from another website?
+    """Did this change come from PeakCut's own page, and not from another website?
 
     The browser's own answer is trusted first: it marks every request "same-origin" or not, and a web page cannot
     fake that mark. Comparing the page's address with the address the request arrived at is only the fallback,
@@ -280,7 +304,7 @@ def _from_here(req, must_say=False) -> bool:
 
 
 def _own_address(host: str) -> bool:
-    """Is this the address ClipCut is really reached by? A number (127.0.0.1, 192.168.1.20), "localhost", or the
+    """Is this the address PeakCut is really reached by? A number (127.0.0.1, 192.168.1.20), "localhost", or the
     host in PEAKCUT_PUBLIC_URL."""
     import ipaddress
     name = host.strip().lower()
@@ -316,7 +340,7 @@ def _page(name, shared=False):
     """A page. The browser keeps its copy and asks each time whether it has changed; when it has not, the answer
     is a few bytes ("not modified") instead of the whole page again. Signed-in pages are never kept by anything
     in between (a proxy or CDN), only by the person's own browser."""
-    return FileResponse(WEB / name, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+    return FileResponse(WEB / name, headers={"Cache-Control": ("public" if shared else "private") + ", no-cache"})
 
 
 _LANDING: dict = {}
@@ -345,7 +369,7 @@ def robots():
 def sitemap():
     day = time.strftime("%Y-%m-%d")
     pages = [("/", "1.0", "weekly"), ("/signup", "0.8", "monthly"), ("/login", "0.4", "monthly"), ("/terms", "0.3", "yearly"),
-             ("/privacy", "0.3", "yearly"), ("/acceptable-use", "0.2", "yearly")]
+             ("/privacy", "0.3", "yearly"), ("/refunds", "0.3", "yearly"), ("/acceptable-use", "0.2", "yearly")]
     body = "".join(f"<url><loc>{config.PUBLIC_URL}{u}</loc><lastmod>{day}</lastmod><changefreq>{c}</changefreq>"
                    f"<priority>{p}</priority></url>" for u, p, c in pages)
     return Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -364,15 +388,19 @@ def reset_page():
 
 
 LEGAL = {
-    "privacy": ("Privacy Policy", "How ClipCut collects, uses and protects your data, including Google user data, cookies and your privacy rights."),
-    "terms": ("Terms of Service", "The terms for using ClipCut, the AI clipping tool for streams and videos: accounts, availability and liability."),
-    "acceptable-use": ("Acceptable Use Policy", "What you may and may not do with ClipCut, the AI stream clipping tool."),
+    "privacy": ("Privacy Policy", "How PeakCut collects, uses and protects your data, including Google user data, cookies and your privacy rights."),
+    "terms": ("Terms of Service", "The terms for using PeakCut, the AI clipping tool for streams and videos: accounts, prepaid credits, availability and liability."),
+    "acceptable-use": ("Acceptable Use Policy", "What you may and may not do with PeakCut, the AI stream clipping tool."),
+    "refunds": ("Refund Policy", "PeakCut AI credit purchases are final and non-refundable. Each top-up can be used for 12 months."),
+    "data-deletion": ("Data deletion", "How to remove your connected accounts and delete your PeakCut data."),
 }
 
 
 @app.get("/privacy")
 @app.get("/terms")
 @app.get("/acceptable-use")
+@app.get("/refunds")
+@app.get("/data-deletion")
 def legal_page(request: Request):
     """Public, so Google's app review (and anyone) can read them. Business name, law and contact come from settings."""
     import html as _h
@@ -381,9 +409,9 @@ def legal_page(request: Request):
     contact = config.CONTACT_EMAIL
     who = (f'<a href="mailto:{_h.escape(contact)}">{_h.escape(contact)}</a>' if contact
            else "the contact details on our website")
-    name = _h.escape(config.LEGAL_NAME or "ClipCut")
+    name = _h.escape(config.LEGAL_NAME or "PeakCut")
     law = (f"the laws of {_h.escape(config.LEGAL_COUNTRY)}" if config.LEGAL_COUNTRY
-           else "the laws of the country where ClipCut's operator is established")
+           else f"the laws of the country where {name}'s operator is established")
     out = (_LEGAL_HTML or (WEB / "legal.html").read_text(encoding="utf-8"))
     for k, v in {"{{CONTACT}}": who, "{{PAGE}}": page, "{{PAGE_PATH}}": page, "{{SITE}}": _h.escape(config.PUBLIC_URL),
                  "{{NAME}}": name, "{{LAW}}": law, "{{TITLE}}": title, "{{DESC}}": desc}.items():
@@ -424,9 +452,12 @@ def brand(name: str):
 
 @app.get("/assets/{name}")
 def asset(name: str):
-    if not re.fullmatch(r"[\w\-]+\.js", name) or not (WEB / name).is_file():
+    if not re.fullmatch(r"[\w\-]+\.js", name):
         raise HTTPException(404)
-    return FileResponse(WEB / name, media_type="text/javascript", headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"})
+    target = (WEB / "assets" / name) if (WEB / "assets" / name).is_file() else (WEB / name)
+    if not target.is_file():
+        raise HTTPException(404)
+    return FileResponse(target, media_type="text/javascript", headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"})
 
 
 @app.get("/favicon.ico")
@@ -573,10 +604,12 @@ def google_callback(request: Request, code: str = "", state: str = "", error: st
 def status(request: Request):
     from . import notices
     from . import updates
+    from . import fetch_model
     me_ = _me(request)
     return {"user": auth.public(me_), "update": updates.latest() if me_.is_admin else None, "accounts": config.ACCOUNTS, "disk_full": load.disk_full(), "no_ffmpeg": bool(_tools.missing()), "links": {"repo": config.REPO_URL, "follow": config.FOLLOW_URL}, "ai": usage.brief(), "unread": notices.unread(),
             "tour": not accounts.settings()["tour_done"],
-            "youtube": accounts.youtube_ready(), "connect": {p: accounts.can_connect(p) for p in accounts.PLATFORM_NAMES}, "max_upload_mb": config.MAX_UPLOAD_MB, "upload_part_mb": config.UPLOAD_PART_MB, "max_batch": config.MAX_ACTIVE_JOBS_PER_USER,
+            "youtube": accounts.youtube_ready(), "connect": {p: accounts.can_connect(p) for p in ("youtube", "instagram", "tiktok")}, "max_upload_mb": config.MAX_UPLOAD_MB, "upload_part_mb": config.UPLOAD_PART_MB, "max_batch": config.MAX_ACTIVE_JOBS_PER_USER,
+            "speech": {k: {"state": fetch_model.status(k)} for k in fetch_model.MODELS},
             "styles": {k: v["label"] for k, v in render.STYLES.items()}, "layouts": render.LAYOUTS,
             "languages": {"auto": "Auto Detect 🌐", "hi": "Hindi / Hinglish 🇮🇳", "en": "English 🇺🇸", "ur": "Urdu 🇵🇰"}}
 
@@ -1175,7 +1208,7 @@ def email_preview(request: Request, kind: str = "verify"):
     from . import mailer
     _admin(request)
     if kind == "reset":
-        page = mailer.preview("Reset your password", "Someone asked to reset the password for this ClipCut account. If that was you, choose a new one below.",
+        page = mailer.preview("Reset your password", "Someone asked to reset the password for this PeakCut account. If that was you, choose a new one below.",
                               "Choose a new password", config.PUBLIC_URL + "/reset?t=example",
                               "The link works for one hour. If you didn't ask for this, ignore this email and your password stays the same.")
     else:
@@ -1190,9 +1223,9 @@ def test_email(request: Request):
     me_ = _admin(request)
     if not mailer.ready():
         raise HTTPException(400, "No email service is set up yet. Add the PEAKCUT_SMTP settings to .env first.")
-    mailer.send(me_.email, "ClipCut test email", "Your emails are working",
-                "This is a test from your ClipCut server. Account emails like this one will now reach people.",
-                "Open ClipCut", config.PUBLIC_URL + "/app", "You can ignore this message.")
+    mailer.send(me_.email, "PeakCut test email", "Your emails are working",
+                "This is a test from your PeakCut server. Account emails like this one will now reach people.",
+                "Open PeakCut", config.PUBLIC_URL + "/app", "You can ignore this message.")
     return {"sent_to": me_.email}
 
 
@@ -1598,9 +1631,9 @@ def public_clip(token: str):
     return FileResponse(f, media_type="video/mp4", headers={"Cache-Control": "private, no-store"})
 
 
-# ---------------------------------------------------------------- where ClipCut keeps everything (Settings, Storage)
+# ---------------------------------------------------------------- where PeakCut keeps everything (Settings, Storage)
 def _on_this_computer(request: Request) -> bool:
-    """Is the person sitting at the computer ClipCut runs on? Only then can a folder window be opened for them."""
+    """Is the person sitting at the computer PeakCut runs on? Only then can a folder window be opened for them."""
     host = request.client.host if request.client else ""
     return host in ("127.0.0.1", "::1", "localhost") and not config.env("PEAKCUT_TRUST_PROXY")
 
@@ -1617,7 +1650,7 @@ def storage_open(request: Request):
     from . import storage
     _admin(request)
     if not _on_this_computer(request):
-        raise HTTPException(400, "The folder can only be opened on the computer ClipCut runs on.")
+        raise HTTPException(400, "The folder can only be opened on the computer PeakCut runs on.")
     try:
         storage.open_folder()
     except OSError as e:
@@ -1630,7 +1663,7 @@ def storage_pick(request: Request):
     from . import storage
     _admin(request)
     if not _on_this_computer(request):
-        raise HTTPException(400, "Type the folder's path instead: a folder window can only be shown on the computer ClipCut runs on.")
+        raise HTTPException(400, "Type the folder's path instead: a folder window can only be shown on the computer PeakCut runs on.")
     return {"path": storage.pick_folder()}
 
 
@@ -1661,6 +1694,70 @@ def apps_put(request: Request, body: dict = Body(...)):
         return accounts.save_app(str(body.get("platform", "")), body.get("client_id"), body.get("client_secret"))
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+@app.get("/api/youtube-cookies")
+def get_yt_cookies(request: Request):
+    _admin(request)
+    return {"has_cookies": config.YT_COOKIES.is_file()}
+
+
+@app.put("/api/youtube-cookies")
+def set_yt_cookies(request: Request, body: dict = Body(...)):
+    _admin(request)
+    if body.get("remove"):
+        config.YT_COOKIES.unlink(missing_ok=True)
+        return {"saved": False}
+    text = str(body.get("text", "")).strip()
+    if "\t" not in text or not any(k in text for k in ("youtube", "google")):
+        raise HTTPException(400, "That does not look like a YouTube cookies file.")
+    config.YT_COOKIES.write_text(text, encoding="utf-8")
+    return {"saved": True}
+
+
+@app.get("/api/speech")
+def speech_get(request: Request):
+    from . import fetch_model
+    _admin(request)
+    models = []
+    for k, m in fetch_model.MODELS.items():
+        st = fetch_model.state.get(k, {})
+        models.append({
+            "lang": k,
+            "label": m[0],
+            "state": fetch_model.status(k),
+            "size_mb": m[3],
+            "error": st.get("error", "")
+        })
+    return {"models": models}
+
+
+@app.post("/api/speech/{lang}")
+def speech_post(request: Request, lang: str):
+    from . import fetch_model
+    _admin(request)
+    if lang not in fetch_model.MODELS:
+        raise HTTPException(400, f"Unknown language: {lang}")
+    if fetch_model.ready(lang) or fetch_model.state.get(lang, {}).get("doing"):
+        return {"ok": True}
+    threading.Thread(target=lambda: _quiet(lambda: fetch_model.ensure(lang)), daemon=True).start()
+    return {"ok": True}
+
+
+@app.delete("/api/speech/{lang}")
+def speech_delete(request: Request, lang: str):
+    from . import fetch_model
+    _admin(request)
+    if lang not in fetch_model.MODELS:
+        raise HTTPException(400, f"Unknown language: {lang}")
+    if lang == "en":
+        raise HTTPException(400, "English model cannot be removed.")
+    if transcribe._pool(lang).made > 0:
+        raise HTTPException(409, "Model is currently in use.")
+    d = fetch_model.folder(lang)
+    if d.exists():
+        shutil.rmtree(d, ignore_errors=True)
+    return {"ok": True}
 
 
 @app.post("/api/posts")
@@ -1697,7 +1794,7 @@ def test_alert():
         auth_problem = str(e)
     if auth_problem:
         raise HTTPException(429, auth_problem)
-    problems = alerts.send("ClipCut: test message. Alerts are working.")
+    problems = alerts.send("PeakCut: test message. Alerts are working.")
     if problems:
         raise HTTPException(400, "; ".join(problems))
     return {"ok": True}
@@ -1755,18 +1852,18 @@ def admin_delete_user(request: Request, uid: str, body: dict = Body(...)):
 
 
 def main():
-    print(f"\n  ClipCut is running:  {config.PUBLIC_URL}\n")
+    print(f"\n  PeakCut is running:  {config.PUBLIC_URL}\n")
     if not config.ACCOUNTS and (config.HTTPS or config.HOST not in ("127.0.0.1", "localhost", "::1")):
-        print("  Sign-in is off, so anyone who can reach this address can use ClipCut and its AI key.\n"
+        print("  Sign-in is off, so anyone who can reach this address can use PeakCut and its AI key.\n"
               "  On a server other people can reach, set PEAKCUT_ACCOUNTS=1 in .env.\n", flush=True)
     if config.env("PEAKCUT_AUTO_RELOAD") == "1":
         # restart by itself whenever the server code changes (pages in web/ never need a restart)
         uvicorn.run("studio.server:app", host=config.HOST, port=config.PORT, log_level="warning", backlog=4096, reload=True,
                     reload_dirs=[str(config.ROOT / "studio")], reload_includes=["*.py"],
-                    proxy_headers=bool(config.env("PEAKCUT_TRUST_PROXY")), forwarded_allow_ips="*")
+                    proxy_headers=False)
         return
     uvicorn.run(app, host=config.HOST, port=config.PORT, log_level="warning", backlog=4096,
-                proxy_headers=bool(config.env("PEAKCUT_TRUST_PROXY")), forwarded_allow_ips="*")
+                proxy_headers=False)
 
 
 if __name__ == "__main__":

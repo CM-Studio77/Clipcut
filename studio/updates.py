@@ -17,11 +17,11 @@ import httpx
 
 from . import config
 
-REPO = (config.env("PEAKCUT_UPDATE_REPO") or "CM-Studio77/Clipcut").strip().strip("/")
+REPO = (config.env("PEAKCUT_UPDATE_REPO") or "haziqahmedqasmi/PeakCut").strip().strip("/")
 BRANCH = (config.env("PEAKCUT_UPDATE_BRANCH") or "main").strip()
 ON = config.env("PEAKCUT_UPDATE_CHECK", "1") != "0" and bool(re.fullmatch(r"[\w.\-]+/[\w.\-]+", REPO))
 EVERY = 60
-UA = {"User-Agent": "ClipCut-update-check"}
+UA = {"User-Agent": "PeakCut-update-check"}
 _state = {"checked": 0.0, "result": None, "seen": "", "notes": None}
 _lock = threading.Lock()
 _started = False

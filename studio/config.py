@@ -121,6 +121,7 @@ USERS_DIR = DATA_DIR / "users"          # users/<user id>/{creators,jobs,account
 MODELS_DIR = Path(env("PEAKCUT_MODELS") or DATA_DIR / "models")
 TMP_DIR = DATA_DIR / "tmp"
 FONTS_DIR = DATA_DIR / "fonts"          # caption fonts, copied from studio/fonts so every server renders the same
+YT_COOKIES = DATA_DIR / "youtube-cookies.txt"
 # YouTube already has a word-by-word transcript of most videos. With this on, that is what the AI reads to find the
 # clips (seconds instead of transcribing hours), and our own model is run only on the clips themselves.
 YT_TRANSCRIPT = env("PEAKCUT_YT_TRANSCRIPT", "1") != "0"

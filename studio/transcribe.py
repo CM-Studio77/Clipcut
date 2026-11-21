@@ -5,6 +5,7 @@ separate machine with a graphics card (studio/asr_worker.py), which does the sam
 machine cannot be reached, the pieces are done here instead, so transcription never stops because of it."""
 import os
 import queue
+import re
 import threading
 import time
 
@@ -156,11 +157,27 @@ def _load_sherpa():
                        "folder somewhere short, like C:\\peakcut, and start it again.") from first
 
 
-def _new():
+class RemoteLacks(RuntimeError):
+    pass
+
+
+class _ASRPool:
+    def __init__(self):
+        self.made = 0
+
+
+_asr_pools: dict[str, _ASRPool] = {}
+
+
+def _pool(lang: str = "en") -> _ASRPool:
+    return _asr_pools.setdefault(lang, _ASRPool())
+
+
+def _new(lang: str = "en"):
     sherpa_onnx = _sherpa()
     from . import fetch_model
-    fetch_model.ensure()             # downloaded here, once, if it was never fetched
-    d = config.ASR_MODEL_DIR
+    fetch_model.ensure(lang, start=(lang == "en"))
+    d = fetch_model.folder(lang)
     return sherpa_onnx.OfflineRecognizer.from_transducer(
         **_model_files(d),
         tokens=str(d / "tokens.txt"),
@@ -246,6 +263,9 @@ BATCH = int(os.environ.get("PEAKCUT_ASR_BATCH", "1"))   # pieces decoded togethe
 # each piece already uses every core, so one at a time (which also keeps the words exactly as before).
 
 
+_ARABIC_VOWELS = re.compile(r"[\u064b-\u0652\u0640]")
+
+
 def _words(tokens, timestamps, a: int, b: int) -> list:
     out = []
     off, seg_end = a / 16000.0, b / 16000.0
@@ -253,6 +273,7 @@ def _words(tokens, timestamps, a: int, b: int) -> list:
     for tok, t in zip(tokens, timestamps):
         new_word = tok.startswith((" ", "▁")) or gap
         piece = tok.replace("▁", " ").strip()
+        piece = _ARABIC_VOWELS.sub("", piece)
         if not piece:
             gap = True      # a space on its own: whatever comes next starts a new word ("in" "120", not "in120")
             continue
@@ -290,15 +311,20 @@ def _remote_ok() -> bool:
     return bool(REMOTE) and time.time() >= _remote_down_until
 
 
-def _decode_remote(pieces: list) -> list:
+def _decode_remote(pieces: list, lang: str = "en") -> list:
     """The same, on the machine with the graphics card. Audio goes as 16-bit sound, the answer comes back as text."""
     import httpx
     raw = [np.clip(seg * 32768.0, -32768, 32767).astype("<i2") for seg in pieces]
     r = httpx.post(REMOTE + "/decode", content=b"".join(x.tobytes() for x in raw), timeout=httpx.Timeout(120, connect=4),
                    headers={"Authorization": "Bearer " + REMOTE_TOKEN, "X-Lens": ",".join(str(len(x)) for x in raw),
-                            "Content-Type": "application/octet-stream"})
+                            "Content-Type": "application/octet-stream", "X-Lang": lang})
+    if r.status_code == 409:
+        raise RemoteLacks("Remote machine lacks the requested model")
     r.raise_for_status()
-    got = r.json()["pieces"]
+    data = r.json()
+    if lang != "en" and data.get("lang") != lang:
+        raise RemoteLacks(f"Remote machine answered in {data.get('lang')}, not {lang}")
+    got = data["pieces"]
     if len(got) != len(pieces):
         raise ValueError("wrong number of pieces came back")
     return [(p["tokens"], p["timestamps"]) for p in got]
