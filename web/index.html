@@ -4469,6 +4469,10 @@ function drawClipDlg(full) {
           <button class="btn sm primary" type="button" data-act="genseo" data-j="${j.id}" data-c="${esc(c.id)}">✨ Generate Hinglish SEO</button>
           <button class="btn sm" type="button" data-act="copyallseo" data-j="${j.id}" data-c="${esc(c.id)}">📋 Copy Full YouTube SEO Package</button>
         </div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-top:10px">
+          <h3 style="margin:0">Post text</h3>
+          <button class="btn sm" type="button" data-act="writetext">Write again with AI</button>
+        </div>
         <label class="f">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <span>Title (#Shorts included)</span>
@@ -4879,16 +4883,33 @@ document.addEventListener("click", async e => {
       if (!await ask("Disconnect this account?", "Posts still waiting for it will fail.", "Disconnect", true)) return;
       await api(`/api/accounts/${d.id}`, {method:"DELETE"}); await tick(); return drawSettings();
     }
+    if (a === "writetext") {
+      b.disabled = true; const was = b.textContent; b.textContent = "Writing…";
+      try {
+        const t = await send(`/api/jobs/${D.jid}/clips/${D.cid}/write`, {});
+        const f = k => $(`#clipdlg [data-f="${k}"]`);
+        if (f("title")) f("title").value = t.title;
+        if (f("description")) f("description").value = t.description;
+        if (f("hashtags")) f("hashtags").value = (t.hashtags || []).join(" ");
+        return toast("New post text written. Read it over: it is saved when you post.", "ok");
+      } finally { b.disabled = false; b.textContent = was; }
+    }
     if (a === "remake") {
       const body = {}; $$("#clipdlg [data-f]").forEach(i => {
         body[i.dataset.f] = i.type === "checkbox" ? i.checked : i.type === "number" ? Number(i.value) : i.value;
       });
+      const v = k => $(`#clipdlg [data-f="${k}"]`)?.value || "";
+      const pt = {title: v("title"), description: v("description"), hashtags: (v("hashtags") || "").split(/\s+/).map(h => h.replace(/^#+/, "")).filter(Boolean)};
+      Object.assign(body, pt);
       await send(`/api/jobs/${D.jid}/clips/${D.cid}/render`, body); toast("Re-making the clip…", "ok"); return tick();
     }
     if (a === "postnow" || a === "postqueue") {
       const accs = $$("#clipdlg [data-pacc]:checked").map(i => i.value);
       if (!accs.length) return toast("Tick at least one account first.", "bad");
       if (a === "postnow" && !await ask("Post now?", `This clip goes to ${accs.length} account${accs.length > 1 ? "s" : ""} straight away.`, "Post now")) return;
+      const v = k => $(`#clipdlg [data-f="${k}"]`)?.value || "";
+      const pt = {title: v("title"), description: v("description"), hashtags: (v("hashtags") || "").split(/\s+/).map(h => h.replace(/^#+/, "")).filter(Boolean)};
+      await send(`/api/jobs/${D.jid}/clips/${D.cid}/text`, pt, "PUT");
       await send("/api/posts", {job:D.jid, clip:D.cid, accounts:accs, now:a === "postnow"});
       toast(a === "postnow" ? "Posting now" : "Added to the queue", "ok"); return tick();
     }

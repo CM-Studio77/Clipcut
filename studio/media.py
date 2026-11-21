@@ -155,9 +155,12 @@ def youtube_words(url: str):
     with _youtube_guard(url), _ydl({}) as ydl:
         i = ydl.extract_info(url, download=False)
         auto = i.get("automatic_captions") or {}
-        key = next((k for k in auto if k.endswith("-orig")), None)
-        if not key and i.get("language") in auto:
-            key = i["language"]
+        lang = str(i.get("language") or "").strip().lower()
+        base = lang.split("-")[0] if lang else ""
+        candidates = [f"{lang}-orig", lang, f"{base}-orig", base]
+        key = next((c for c in candidates if c and c in auto), None)
+        if not key:
+            key = next((k for k in auto if k.endswith("-orig")), None)
         track = next((f for f in auto.get(key) or [] if f.get("ext") == "json3" and f.get("url")), None) if key else None
         if not track:
             return None
@@ -346,11 +349,20 @@ def load_audio(wav: Path) -> np.ndarray:
     return data
 
 
+LOUDNESS_PIECE = 600       # seconds of audio worked out at a time
+
+
 def loudness_per_second(audio: np.ndarray) -> np.ndarray:
-    """RMS level in dB for each second of audio."""
+    """RMS level in dB for each second of audio.
+
+    Worked out ten minutes at a time. All at once, a day-long video needs a table of several gigabytes (one
+    float per sample), which most computers cannot find room for; this way it needs about 40 MB, whatever the length."""
     n = len(audio) // 16000
     if n == 0:
         return np.zeros(1, dtype=np.float32)
-    x = audio[: n * 16000].reshape(n, 16000).astype(np.float32) / 32768.0
-    rms = np.sqrt((x ** 2).mean(axis=1) + 1e-10)
-    return (20 * np.log10(rms)).astype(np.float32)
+    out = np.empty(n, dtype=np.float32)
+    for a in range(0, n, LOUDNESS_PIECE):
+        b = min(n, a + LOUDNESS_PIECE)
+        x = audio[a * 16000: b * 16000].reshape(b - a, 16000).astype(np.float32) / 32768.0
+        out[a:b] = 20 * np.log10(np.sqrt((x ** 2).mean(axis=1) + 1e-10))
+    return out

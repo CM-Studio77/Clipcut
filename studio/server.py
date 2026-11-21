@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 
 from . import admin as admins
 from . import account, load
-from . import (accounts, ai, alerts, auth, config, creators, ctx, db, jobs, live, media, posting,
+from . import (accounts, ai, alerts, auth, brain, config, creators, ctx, db, jobs, live, media, posting,
                profiles, render, safe, transcribe, usage)
 
 from . import tools as _tools  # noqa: E402
@@ -793,13 +793,35 @@ def _up_root() -> Path:
     return d
 
 
+UP_IDLE_SEC = 15 * 60     # an upload of your own that hasn't moved for this long was left behind (tab closed, page reloaded)
+
+
+def _up_active(d: Path) -> float:
+    """When this upload last moved: its folder, or any piece in it (a piece being sent grows as it arrives)."""
+    newest = d.stat().st_mtime
+    for f in d.iterdir():
+        try:
+            newest = max(newest, f.stat().st_mtime)
+        except OSError:
+            pass
+    return newest
+
+
 def _up_sweep():
-    """Forget uploads that were started and never finished (after six hours)."""
+    """Forget uploads that were started and never finished: anyone's after six hours, and the asker's own once
+    they have stood still for UP_IDLE_SEC. An upload cut short by closing the tab or reloading the page never
+    says it stopped, and it must not keep counting against the limit of uploads at once."""
+    me = ctx.uid()
     for d in _up_root().glob("up-*"):
         try:
-            if d.is_dir() and time.time() - d.stat().st_mtime > 6 * 3600:
+            if not d.is_dir():
+                continue
+            idle = time.time() - _up_active(d)
+            if idle > 6 * 3600:
                 shutil.rmtree(d, ignore_errors=True)
-        except OSError:
+            elif idle > UP_IDLE_SEC and json.loads((d / "meta.json").read_text(encoding="utf-8")).get("user") == me:
+                shutil.rmtree(d, ignore_errors=True)
+        except (OSError, ValueError):
             pass
 
 
@@ -944,6 +966,41 @@ def rerender(jid: str, cid: str, body: dict = Body(...)):
     return jobs.public(job)
 
 
+def _clip_or_404(jid: str, cid: str):
+    job = _job_or_404(jid)
+    clip = next((c for c in job["clips"] if c["id"] == cid), None)
+    if not clip:
+        raise HTTPException(404, "No such clip")
+    return job, clip
+
+
+@app.put("/api/jobs/{jid}/clips/{cid}/text")
+def clip_text(jid: str, cid: str, body: dict = Body(...)):
+    """Save a clip's title, description and hashtags. The video is not made again."""
+    job, clip = _clip_or_404(jid, cid)
+    _throttle("cliptext:" + ctx.uid(), 120, 600)
+    try:
+        jobs.save_post_text(job, clip, body)
+    except (ValueError, TypeError) as e:
+        raise HTTPException(400, str(e))
+    return jobs.public(job)
+
+
+@app.post("/api/jobs/{jid}/clips/{cid}/write")
+def clip_write(jid: str, cid: str):
+    """Ask the AI for a new title, description and hashtags for one clip. Returned to the page, not saved."""
+    job, clip = _clip_or_404(jid, cid)
+    _throttle("clipwrite:" + ctx.uid(), 20, 600, "That's a lot of rewrites in a short time. Wait a few minutes.")
+    usage.set_context(job.get("creator"), job.get("title") or "")
+    try:
+        return brain.post_text(jobs.spoken_in(job, clip), job.get("title") or "", job.get("uploader") or "",
+                               game=job.get("game") or None)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+
+
 @app.post("/api/jobs/{jid}/clips/{cid}/seo")
 def generate_clip_seo(jid: str, cid: str, body: dict = Body(default={})):
     from . import brain
@@ -1083,10 +1140,17 @@ def delete_my_account(request: Request, body: dict = Body(...)):
 def media_file(jid: str, name: str, download: int = 0):
     if not re.fullmatch(r"[\w\-]+\.(mp4|jpg)", name):
         raise HTTPException(404)
-    f = Path(_job_or_404(jid)["dir"]) / "clips" / name
+    job = _job_or_404(jid)
+    f = Path(job["dir"]) / "clips" / name
     if not f.is_file():
         raise HTTPException(404)
-    return FileResponse(f, filename=name if download else None, headers={"Cache-Control": "private, max-age=300"})
+    save_as = name
+    if download and name.endswith(".mp4"):
+        # a clip is saved under its title, not "clip01.mp4", the same as when several are downloaded as a zip
+        clip = next((c for c in job.get("clips", []) if Path(str(c.get("file") or "")).name == name), None)
+        if clip:
+            save_as = account.clip_title_name(clip, Path(name).stem) + ".mp4"
+    return FileResponse(f, filename=save_as if download else None, headers={"Cache-Control": "private, max-age=300"})
 
 
 # ================================================================ creators and live recording

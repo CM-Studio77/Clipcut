@@ -192,6 +192,13 @@ def _format_facebook_caption(clip, creator):
     return "\n\n".join(parts)
 
 
+def _caption(clip, creator):
+    # A description the person wrote themselves is posted as it is, without the AI's hashtags added to it, and
+    # one that already ends with its hashtags does not get them twice.
+    tags = "" if clip.get("fixed_description") or clip.get("hashtags_in_description") else " ".join("#" + h for h in clip.get("hashtags", []))
+    return "\n\n".join(x for x in (clip.get("description", ""), tags, creator.get("post_footer", "")) if x)
+
+
 def _post(p):
     job = jobs.get(p["job"])
     clip = next((c for c in job["clips"] if c["id"] == p["clip"]), None) if job else None

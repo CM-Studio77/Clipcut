@@ -138,7 +138,10 @@ class Session:
         self.t_done = 0.0             # transcript is complete up to this second
         self.segments = []            # (path, start, end) on the session clock
         self.seg_clock = 0.0
+        self.part_base = {}           # part -> the stream second that part's own list starts at
         self.csv_seen = {}
+        self.listed = set()
+        self.swept = 0.0
         self.part = len(list(self.buf.glob("p*.csv")))
         self.chat = collections.Counter()   # second -> messages
         self.chat_users = {}                 # second -> the people who talked, when it can be told
@@ -312,17 +315,37 @@ class Session:
                 if not f.exists():
                     continue
                 rows = [r.split(",") for r in f.read_text(encoding="utf-8", errors="ignore").splitlines() if r.count(",") >= 2]
-                for name, a, b in (r[:3] for r in rows[self.csv_seen.get(i, 0):]):
+                fresh = rows[self.csv_seen.get(i, 0):]
+                if fresh and i not in self.part_base:
+                    first = fresh[0]
                     try:
-                        dur = max(0.0, float(b) - float(a))
+                        self.part_base[i] = 0.0 if float(first[1]) >= self.seg_clock - 5 else self.seg_clock
+                    except (IndexError, ValueError):
+                        self.part_base[i] = 0.0
+                base = self.part_base.get(i, 0.0)
+                for name, a, b in (r[:3] for r in fresh):
+                    try:
+                        start, end = base + float(a), base + float(b)
                     except ValueError:
                         continue
-                    self.segments.append((self.buf / name, self.seg_clock, self.seg_clock + dur))
-                    self.seg_clock += dur
+                    if end <= start:
+                        continue
+                    self.segments.append((self.buf / name, start, end))
+                    self.listed.add(name)
+                    self.seg_clock = max(self.seg_clock, end)
                 self.csv_seen[i] = len(rows)
             keep_from = self.seg_clock - self.settings["buffer_min"] * 60
             while self.segments and self.segments[0][2] < keep_from:
                 self.segments.pop(0)[0].unlink(missing_ok=True)
+            if time.time() - self.swept > 60:
+                self.swept = time.time()
+                now = time.time()
+                for p in self.buf.glob("p*.ts"):
+                    try:
+                        if p.name not in self.listed and now - p.stat().st_mtime > 60:
+                            p.unlink(missing_ok=True)
+                    except OSError:
+                        pass
 
     # ---------------------------------------------------------------- chat (Twitch only)
     def _chat(self, channel):
@@ -707,6 +730,8 @@ class Session:
 
     def clip_last(self, seconds):
         end = self.samples / SR
+        if self.seg_clock and self.seg_clock < end:
+            end = self.seg_clock        # the picture has not caught up with the sound: clip what was recorded
         if end < 5:
             raise ValueError("Nothing has been recorded yet.")
         self.manual.append({"start": max(0.0, end - seconds), "end": end})
@@ -793,26 +818,54 @@ class Session:
         jobs.submit_live(cleanup)
 
 
-def recover(job):
-    """After a restart: finish the clips of an interrupted recording from the stream pieces still on disk."""
-    c = creators.get(job["creator"]) or dict(creators.DEFAULTS)
-    s = Session(job, c)
-    s.ended, s.end_note = True, "Recording stopped when the studio closed"
+def _clip_span(clip, src_offset, src_end):
+    """The part of a clip the recorded picture really holds, or None when the end of it was never recorded.
+
+    The clip's own times are on the transcript clock; the source file starts at `src_offset` and covers up to
+    `src_end`. A second of give is allowed at the edges, because the picture stops between two frames."""
+    if clip["end"] > src_end + 1:
+        return None
+    return max(clip["start"], src_offset), min(clip["end"], src_end)
+
+
+def _pieces_on_disk(s):
+    """Every piece still on disk, put back at its real time in the stream. Used after a restart, when the
+    running clock is gone and only ffmpeg's own lists are left to go by."""
     s.part = len(list(s.buf.glob("p*.csv")))
     s.seg_clock = 0.0
     s.csv_seen = {}
     with s.lock:
         for i in range(1, s.part + 1):
             f = s.buf / f"p{i:02d}.csv"
+            if not f.exists():
+                continue
             rows = [r.split(",") for r in f.read_text(encoding="utf-8", errors="ignore").splitlines() if r.count(",") >= 2]
+            base = 0.0                  # the first part's list starts at the start of the recording
+            if i > 1 and rows:
+                try:
+                    if float(rows[0][1]) < s.seg_clock - 5:
+                        base = s.seg_clock       # this part's list begins again at zero
+                except ValueError:
+                    pass
             for name, a, b in (r[:3] for r in rows):
                 try:
-                    dur = max(0.0, float(b) - float(a))
+                    start, end = base + float(a), base + float(b)
                 except ValueError:
                     continue
-                s.segments.append((s.buf / name, s.seg_clock, s.seg_clock + dur))
-                s.seg_clock += dur
+                if end <= start:
+                    continue
+                s.segments.append((s.buf / name, start, end))
+                s.listed.add(name)
+                s.seg_clock = max(s.seg_clock, end)
             s.csv_seen[i] = len(rows)
+
+
+def recover(job):
+    """After a restart: finish the clips of an interrupted recording from the stream pieces still on disk."""
+    c = creators.get(job["creator"]) or dict(creators.DEFAULTS)
+    s = Session(job, c)
+    s.ended, s.end_note = True, "Recording stopped when the studio closed"
+    _pieces_on_disk(s)
     try:
         s.words = json.loads((s.dir / "words.json").read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001
