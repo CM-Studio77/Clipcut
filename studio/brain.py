@@ -658,8 +658,9 @@ def _fix_caption_words(words: list, title: str = "", lang: str = "") -> list:
     hindi = (lang or "").lower().startswith(("hi", "ur")) or any(roman.needs_roman(w["w"]) for w in words)
     hinglish = ("If a word is Hindi or Urdu (in Devanagari or Urdu script, or already "
                 "in Roman letters), write that same word in Roman letters the way people type Hindi in chats (Hinglish): "
-                "'चूना' -> 'choona', 'जो' -> 'jo', 'उसको' -> 'usko', 'یار' -> 'yaar', 'کیا' -> 'kya'. Never translate it into "
-                "English and never leave Devanagari or Urdu script. ") if hindi else ""
+                "'चूना' -> 'choona', 'जो' -> 'jo', 'उसको' -> 'usko', 'یار' -> 'yaar', 'کیا' -> 'kya'. "
+                "Correct speech-to-text mishearings into natural Roman Hinglish (e.g. 'bye' -> 'bhai', 'care'/'car' -> 'kar', 'kia' -> 'kya', 'dakh' -> 'dekh', 'nay' -> 'nahi', 'bol' -> 'bol', 'aray' -> 'are', 'bhi' -> 'bhi'). "
+                "Never translate it into English and never leave Devanagari or Urdu script. ") if hindi else ""
     numbered = "\n".join(f"{i}: {_safe(w['w'], 60)}" for i, w in enumerate(words))
     prompt = (
         "These are the words of a short video clip's captions, one per line with its number, written by a speech "
@@ -685,6 +686,10 @@ def _fix_caption_words(words: list, title: str = "", lang: str = "") -> list:
             # Hindi or Urdu spelled in Roman letters. Checked against the rule-made spelling where there is one, so a
             # translation ("lime" for चूना) is not taken for a spelling.
             if roman.has_hindi(w["w"]) and len(new.split()) <= 2 and not _same_word(roman.to_roman(w["w"]), new):
+                new = w["w"]
+        elif hindi:
+            # For Hindi/Urdu videos, allow natural Hinglish transliteration & phonetic spelling fixes
+            if len(new) > max(24, len(w["w"]) * 4):
                 new = w["w"]
         elif len(new) > max(24, len(w["w"]) * 4) or not _same_word(w["w"], new):   # a rewrite, not a fix: keep what was said
             new = w["w"]

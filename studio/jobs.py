@@ -536,6 +536,15 @@ def render_one(job, clip, words):
         post = {k: clip[k] for k in ("title", "description", "hashtags", "tags", "hook", "start", "end", "score") if k in clip}
         (d / "clips" / f"{clip['id']}.json").write_text(json.dumps(post, indent=1), encoding="utf-8")
         export_publish_guide(job)
+        ready_dir = Path(r"C:\Users\Kesha\Downloads\ai\READY_FOR_YOUTUBE")
+        if ready_dir.is_dir() and out.get("file"):
+            import shutil
+            clip_file = d / "clips" / out["file"]
+            if clip_file.is_file():
+                try:
+                    shutil.copy2(clip_file, ready_dir / f"{job['id']}_{out['file']}")
+                except Exception:
+                    pass
         if clip["version"] == 1:
             clip.setdefault("made_at", time.time())
             creators.log(job["creator"], f"Clip ready (score {clip['score']}): {clip['title'] or clip['hook']}")

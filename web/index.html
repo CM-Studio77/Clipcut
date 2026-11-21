@@ -2908,7 +2908,15 @@ async function makeClips() {
 /* ============================================================ clips + jobs */
 function scoreCls(s) { return s >= 80 ? "s-hi" : s >= 60 ? "s-mid" : ""; }
 function postPills(c) {
-  return Object.values(c.posts || {}).filter(p => p.status !== "cancelled").map(p => {
+  const posts = Object.values(c.posts || {}).filter(p => p.status !== "cancelled");
+  const byAcc = {};
+  for (const p of posts) {
+    const key = p.account_name || p.account || p.platform;
+    if (!byAcc[key] || p.status === "posted" || (byAcc[key].status !== "posted" && (p.due_at || p.created || 0) >= (byAcc[key].due_at || byAcc[key].created || 0))) {
+      byAcc[key] = p;
+    }
+  }
+  return Object.values(byAcc).map(p => {
     const cls = p.status === "posted" ? "ok" : p.status === "failed" ? "bad" : "warn";
     const txt = `${esc(p.account_name)} · ${p.status === "scheduled" ? clock(p.due_at) : p.status}`;
     return p.url ? `<a class="pill ${cls}" href="${esc(p.url)}" target="_blank" rel="noopener">${txt}</a>` : `<span class="pill ${cls}" title="${esc(p.error || "")}">${txt}</span>`;

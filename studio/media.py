@@ -112,6 +112,9 @@ def _ydl(opts):
             }
         },
     }
+    cookie_file = config.DATA_DIR / "cookies.txt"
+    if cookie_file.is_file():
+        base["cookiefile"] = str(cookie_file)
     base.update(opts)
     return yt_dlp.YoutubeDL(base)
 
@@ -131,7 +134,13 @@ def _biggest(job_dir: Path, stem: str) -> Path:
 def info(url: str) -> dict:
     """Title, channel and length, without downloading anything."""
     with _youtube_guard(url), _ydl({}) as ydl:
-        i = ydl.extract_info(url, download=False)
+        try:
+            i = ydl.extract_info(url, download=False)
+        except Exception as e:
+            low = str(e).lower()
+            if "confirm your age" in low or "inappropriate for some users" in low or "age" in low:
+                raise ValueError("This video is Age-Restricted (18+) on YouTube. YouTube blocks automated downloads for age-gated videos. Please upload the .mp4 file directly or use a public video without age restrictions.")
+            raise
     return {"title": i.get("title") or "", "uploader": i.get("uploader") or i.get("channel") or "",
             "duration": float(i.get("duration") or 0), "is_live": bool(i.get("is_live")),
             "thumbnail": i.get("thumbnail") or "", "kind": i.get("_type") or "video"}

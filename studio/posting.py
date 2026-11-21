@@ -228,9 +228,20 @@ def _post(p):
         p.update(status="posted", posted_at=time.time(), remote_id=rid, url=url, error=None)
         creators.log(p["creator"], f"Posted to {acc['name']}: {title}")
     except Exception as e:  # noqa: BLE001
+        err_str = str(e)
         p["tries"] += 1
-        p["error"] = str(e)[-300:]
-        if p["tries"] < 3 and clip and acc:
+        p["error"] = err_str[-300:]
+        low_err = err_str.lower()
+        
+        if "unauthorized_client" in low_err or "invalid_grant" in low_err or "401" in low_err:
+            p["status"] = "failed"
+            p["error"] = "YouTube login expired (unauthorized_client). Reconnect this channel in Settings -> Connected Accounts."
+            creators.log(p["creator"], f"Post failed on {p['account_name']}: {p['error']}")
+        elif "uploadlimitexceeded" in low_err or "exceeded the number of videos" in low_err:
+            p["status"] = "failed"
+            p["error"] = "YouTube daily upload limit reached (uploadLimitExceeded). YouTube resets limits after 24h. Video is saved in READY_FOR_YOUTUBE."
+            creators.log(p["creator"], f"Post failed on {p['account_name']}: {p['error']}")
+        elif p["tries"] < 3 and clip and acc:
             p.update(status="scheduled", due_at=time.time() + 600)  # try again in 10 minutes
         else:
             p["status"] = "failed"
