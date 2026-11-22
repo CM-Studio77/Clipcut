@@ -332,7 +332,6 @@ def _decode_remote(pieces: list, lang: str = "en") -> list:
 
 def _transcribe_parakeet(audio: np.ndarray, on_progress=None) -> list:
     """Returns [{'w': word, 's': start_sec, 'e': end_sec}, ...] using Parakeet."""
-    global _remote_down_until
     words = []
     todo = []
     for a, b in _chunks(audio):
