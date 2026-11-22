@@ -37,17 +37,15 @@ _load_dotenv()
 
 def env(key: str, default=None):
     """Retrieve setting with bidirectional CLIPCUT_* and PEAKCUT_* fallback support."""
+    if key in os.environ:
+        return os.environ[key]
     if key.startswith("PEAKCUT_"):
         clipcut_key = "CLIPCUT_" + key[len("PEAKCUT_"):]
-        if clipcut_key in os.environ:
-            return os.environ[clipcut_key]
-        return os.environ.get(key, default)
+        return os.environ.get(clipcut_key, default)
     elif key.startswith("CLIPCUT_"):
-        if key in os.environ:
-            return os.environ[key]
         peakcut_key = "PEAKCUT_" + key[len("CLIPCUT_"):]
         return os.environ.get(peakcut_key, default)
-    return os.environ.get(key, default)
+    return default
 
 
 _kept: dict = {}

@@ -75,7 +75,6 @@ jobs:
       - name: Run Core Unit & System Tests
         env:
           PYTHONUNBUFFERED: "1"
-          CLIPCUT_DATA: /tmp/clipcut-test-data
         run: |
           python tests/test_local.py
           python tests/test_roman.py
