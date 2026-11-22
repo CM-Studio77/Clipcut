@@ -158,3 +158,7 @@ thread, so while a model is thinking the speech is still being written and
 `tests/test_games.py` (17 checks) covers the game reading, the tags, and that
 the game's tags are added to a post without losing the AI's own. It is in their
 suite as *"knowing which game a stream is"*.
+
+
+---
+*ClipCut AI Studio by [CM Studio](https://github.com/CM-Studio77) • Repository: [CM-Studio77/Clipcut](https://github.com/CM-Studio77/Clipcut)*

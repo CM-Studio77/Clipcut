@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """PeakCut web server. Run with:  python -m studio.server
 
 Public pages:  /  /login  /signup          The app:  /app  (signed-in users only)
@@ -729,9 +736,9 @@ async def instant_clip(request: Request):
 
 @app.get("/api/sample-clips")
 def sample_clips():
-    """Returns pre-rendered Techno Gamerz GTA 6 viral shorts for instant zero-wait demo."""
+    """Returns pre-rendered ClipCut viral shorts for instant zero-wait demo."""
     from . import clip_worker
-    return clip_worker.TECHNO_METADATA
+    return clip_worker.CLIPCUT_DEMO_METADATA
 
 
 @app.get("/api/jobs/{jid}")

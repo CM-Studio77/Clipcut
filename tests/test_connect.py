@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """One-click Connect for YouTube, Instagram and TikTok, and posting to each. The platforms are replaced by
 stand-ins answering the way their documentation says, so nothing leaves this machine."""
 import json, os, sys, tempfile, time

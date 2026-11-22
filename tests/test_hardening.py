@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Security hardening: who is asking (rate limits), email addresses, Google sign-in, and text going into AI prompts.
 Runs against the code directly, with its own empty data folder: nothing outside it is touched."""
 import os, sys, tempfile, time

@@ -25,3 +25,7 @@ ClipCut is an AI-powered automated video clipper and short-form content generato
 | `studio/posting.py` | YouTube, Instagram, and TikTok scheduled uploader |
 | `web/index.html` | ClipCut Studio single-page application |
 | `web/landing.html` | ClipCut marketing and landing page |
+
+
+---
+*ClipCut AI Studio by [CM Studio](https://github.com/CM-Studio77) • Repository: [CM-Studio77/Clipcut](https://github.com/CM-Studio77/Clipcut)*

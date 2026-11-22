@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 # The speech-to-text machine: the same code, built for a graphics card (NVIDIA, CUDA 12).
 # Build from the project root:  docker build -f deploy/gpu/Dockerfile -t peakcut-asr .
 FROM python:3.11-slim

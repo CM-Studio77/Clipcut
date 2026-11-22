@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """With accounts off (the default): no sign-in, and the AI key is set from the dashboard. Runs against the code
 directly, with its own empty data folder and the network replaced: nothing outside it is touched."""
 import json

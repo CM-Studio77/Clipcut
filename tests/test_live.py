@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Live recording: a live answer with no stream URL, a stop during the stream lookup, and wait timeout fallback.
 Runs against the code directly with its own empty data folder, and never starts a real ffmpeg or contacts a site."""
 import os, subprocess, sys, tempfile, threading, time

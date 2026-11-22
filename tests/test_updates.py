@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """The "new version" notice: the version here is read from .git, GitHub is asked what is newer (a stand-in here,
 so nothing leaves this machine), and only the owner is told."""
 import json, os, sys, tempfile

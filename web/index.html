@@ -2051,7 +2051,7 @@ window.loadSampleUrl = function(u) {
     inp.value = u;
     onLink(inp);
     inp.focus();
-    toast("Techno Gamerz GTA 6 URL Loaded! Click 'Make clips' to slice.", "ok");
+    toast("ClipCut Demo Video Loaded! Click 'Make clips' to slice.", "ok");
   }
 };
 
@@ -2629,8 +2629,8 @@ function drawAdd(variant) {
     <div class="composer-input">${ic("link")}<input id="url" placeholder="Paste a YouTube, Twitch or Kick video link" autocomplete="off" aria-label="Video link"></div>
     <div class="sample-bar" style="margin: 8px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <span style="font-size: 11px; color: var(--dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Instant Sample:</span>
-      <button type="button" class="chip" onclick="loadSampleUrl('https://www.youtube.com/watch?v=TeCrjPZ9fds')" style="border-color: rgba(0,243,255,0.4); color: var(--cyan-primary); background: rgba(0,243,255,0.08); cursor: pointer; padding: 4px 10px; border-radius: 999px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
-        🎮 Techno Gamerz (GTA 6 Gameplay Viral Clips)
+      <button type="button" class="chip" onclick="loadSampleUrl('https://github.com/CM-Studio77/Clipcut/demo')" style="border-color: rgba(0,243,255,0.4); color: var(--cyan-primary); background: rgba(0,243,255,0.08); cursor: pointer; padding: 4px 10px; border-radius: 999px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+        ✨ ClipCut Viral Showcase Demo
       </button>
     </div>
     <div class="att" id="att"><div><div class="att-in" id="attIn"></div></div></div>
@@ -2963,7 +2963,7 @@ function postPills(c) {
 }
 function clipHtml(j, c) {
   const m = `/media/${j.id}/`, a = `data-j="${j.id}" data-c="${esc(c.id)}"`;
-  const thumbSrc = c.cover ? `${m}${esc(c.cover)}?v=${c.version}` : (c.thumbnailUrl || '/brand/techno-thumb1.jpg');
+  const thumbSrc = c.cover ? `${m}${esc(c.cover)}?v=${c.version}` : (c.thumbnailUrl || '/brand/showcase-1.jpg');
   const body = c.status === "done" ? `<img src="${thumbSrc}" alt="" loading="lazy"><span class="veil"><span>${ic("play")}</span></span>`
     : c.status === "error" ? `<span class="making" style="animation:none;color:var(--bad);background:var(--bad-soft)">Could not make this clip. Open it to try again.</span>`
     : `<span class="making">${c.status === "rendering" ? "Making this clip…" : "Waiting its turn…"}</span>`;
@@ -4984,7 +4984,7 @@ window.loadSampleUrl = function(u) {
     inp.value = u;
     onLink(inp);
     inp.focus();
-    toast("Techno Gamerz GTA 6 URL Loaded! Click 'Make clips' to slice.", "ok");
+    toast("ClipCut Demo Video Loaded! Click 'Make clips' to slice.", "ok");
   }
 };
 

@@ -874,3 +874,7 @@ Before frontend workstation changes are verified, the backend syntax error docum
 5. **Contract String Integrity**: `drawLiveStudio`, `drawApprovalCenter`, `drawPubHistory`, `drawCreatorLiveStudio`, and `fb_tokensave` are fully intact and functional.
 6. **Backend Test Suite 100% Pass**: Both `tests/test_all_features_live.py` and `tests/test_live_autonomous_system.py` execute cleanly with 10/10 and 7/7 passing tests.
 7. **Clean Browser Console**: No runtime JavaScript errors, CSP violations, or unhandled promise rejections when navigating the workstation interface.
+
+
+---
+*ClipCut AI Studio by [CM Studio](https://github.com/CM-Studio77) • Repository: [CM-Studio77/Clipcut](https://github.com/CM-Studio77/Clipcut)*

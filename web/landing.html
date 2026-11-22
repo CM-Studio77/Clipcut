@@ -1446,9 +1446,9 @@ footer.site .fbottom {
         <p style="color:var(--dim);font-size:13px">Choose a real scenario or enter a custom link:</p>
 
         <div class="sim-preset-cards">
-          <div class="sim-preset selected" data-scenario="techno">
+          <div class="sim-preset selected" data-scenario="esports">
             <div>
-              <b>Technoblade 1v4 Comeback Climax</b>
+              <b>Pro Esports 1v4 Championship Clutch</b>
               <span>YouTube Gaming • 2h 45m Stream</span>
             </div>
             <span class="tag" style="color:var(--cyan-primary)">High Drama</span>
@@ -1936,10 +1936,10 @@ if (tabsContainer) {
 
 // Live Demo Simulator Engine
 const SCENARIOS = {
-  techno: {
+  esports: {
     hook: '"I AM LITERALLY NEVER LOSING THIS GAME"',
     score: "99/100 🔥",
-    tags: "#Minecraft #Technoblade #ViralClips #EpicGaming",
+    tags: "#Esports #ClutchMoments #ViralShorts #ClipCut",
     logs: [
       { prefix: "Whisper Turbo", text: "Transcribing audio chunk 01:14:20 - 01:14:52..." },
       { prefix: "Words Judge", text: "High dramatic tension hook detected (Surprise Index: 0.96)" },
@@ -1974,7 +1974,7 @@ const SCENARIOS = {
   }
 };
 
-let currentScenarioKey = "techno";
+let currentScenarioKey = "esports";
 const presetCards = document.querySelectorAll(".sim-preset");
 const runSimBtn = document.getElementById("runSimulatorBtn");
 const terminalLogs = document.getElementById("simTerminalLogs");
@@ -1987,7 +1987,7 @@ presetCards.forEach(card => {
   card.addEventListener("click", () => {
     presetCards.forEach(c => c.classList.remove("selected"));
     card.classList.add("selected");
-    currentScenarioKey = card.dataset.scenario || "techno";
+    currentScenarioKey = card.dataset.scenario || "esports";
   });
 });
 

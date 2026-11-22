@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Things that must keep working when something goes wrong or grows large: the creator activity log, the machine
 monitor on a system it cannot fully measure, a recording whose ffmpeg cannot start, and the admin day totals.
 Runs against the code directly, with its own empty data folder: nothing outside it is touched."""

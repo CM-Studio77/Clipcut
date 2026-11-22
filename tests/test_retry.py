@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Free AI keys are limited per minute. A "too many requests" answer is waited out long enough to pass, the wait the
 service asks for is followed, a limit for the whole day is not waited out, and nothing is waited after the last try.
 

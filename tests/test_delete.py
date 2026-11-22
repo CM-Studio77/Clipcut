@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Deleting clips, videos, creators and accounts, bulk actions and the zip download. Runs against the code directly,
 with its own empty data folder: nothing outside it is touched."""
 import os, sys, tempfile, zipfile

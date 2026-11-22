@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Hindi and Urdu captions come out in Roman letters (Hinglish): the same words at the same moments, never
 translated. The AI is replaced by a stand-in, so nothing leaves this machine."""
 import os, sys, tempfile

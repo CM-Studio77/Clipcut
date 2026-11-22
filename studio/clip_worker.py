@@ -1,5 +1,11 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """
-Instant Viral Clip Worker for PeakCut
+Instant Viral Clip Worker for ClipCut AI Studio
 Integrates reverse-engineered high-speed clipping, virality scoring, viral tags,
 split-screen 9:16 vertical layouts, and pre-rendered sample viral shorts.
 """
@@ -19,22 +25,22 @@ from . import config, ctx
 BRAND_DIR = config.ROOT / "web" / "brand"
 BRAND_DIR.mkdir(parents=True, exist_ok=True)
 
-TECHNO_METADATA = {
-    "id": "job-techno-gta6-viral",
-    "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3",
-    "channel": "Techno Gamerz",
-    "uploader": "Techno Gamerz",
-    "thumb": "/brand/techno-thumb.jpg",
+CLIPCUT_DEMO_METADATA = {
+    "id": "job-clipcut-viral-showcase",
+    "title": "ClipCut AI Studio — Viral AI Shorts Showcase",
+    "channel": "ClipCut Studio",
+    "uploader": "ClipCut Studio",
+    "thumb": "/brand/showcase-1.jpg",
     "clips": [
         {
             "id": "clip01",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Viral Reaction & Intense Hook",
+            "title": "ClipCut AI Studio — High-Octane Reaction & Viral Hook",
             "hook": "INSANE REACTION MOMENT",
-            "channel": "Techno Gamerz",
-            "file": "techno-clip1.mp4",
-            "cover": "techno-thumb1.jpg",
-            "videoUrl": "/brand/techno-clip1.mp4",
-            "thumbnailUrl": "/brand/techno-thumb1.jpg",
+            "channel": "ClipCut Studio",
+            "file": "showcase-1.mp4",
+            "cover": "showcase-1.jpg",
+            "videoUrl": "/brand/showcase-1.mp4",
+            "thumbnailUrl": "/brand/showcase-1.jpg",
             "score": 99,
             "virality_score": 99,
             "duration": 22,
@@ -45,18 +51,18 @@ TECHNO_METADATA = {
             "captions": "MrBeast Bold",
             "style": "mrbeast",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "ViralShorts", "GTA6", "TechnoGamerz", "Gaming"],
-            "tags": ["gta 6", "techno gamerz", "gaming shorts", "viral shorts"]
+            "hashtags": ["Shorts", "ViralShorts", "ClipCut", "AIStudio", "Gaming"],
+            "tags": ["clipcut", "viral shorts", "ai video generator", "trending shorts"]
         },
         {
             "id": "clip02",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Police Escape & High-Speed Chase",
+            "title": "ClipCut AI Studio — High-Speed Action & Mission Climax",
             "hook": "HIGH-SPEED CHASE & ESCAPE",
-            "channel": "Techno Gamerz",
-            "file": "techno-clip2.mp4",
-            "cover": "techno-thumb2.jpg",
-            "videoUrl": "/brand/techno-clip2.mp4",
-            "thumbnailUrl": "/brand/techno-thumb2.jpg",
+            "channel": "ClipCut Studio",
+            "file": "showcase-2.mp4",
+            "cover": "showcase-2.jpg",
+            "videoUrl": "/brand/showcase-2.mp4",
+            "thumbnailUrl": "/brand/showcase-2.jpg",
             "score": 96,
             "virality_score": 96,
             "duration": 20,
@@ -67,18 +73,18 @@ TECHNO_METADATA = {
             "captions": "Hormozi Pop",
             "style": "hormozi",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "PoliceChase", "GTA6Gameplay", "Viral"],
-            "tags": ["gta 6 police chase", "techno gamerz gta", "action clips"]
+            "hashtags": ["Shorts", "ActionClimax", "EpicMoments", "Viral"],
+            "tags": ["action clips", "gaming highlights", "viral clips", "clipcut ai"]
         },
         {
             "id": "clip03",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Hilarious Dialogue & Ending Moment",
-            "hook": "WAIT FOR THE ENDING",
-            "channel": "Techno Gamerz",
-            "file": "techno-clip3.mp4",
-            "cover": "techno-thumb3.jpg",
-            "videoUrl": "/brand/techno-clip3.mp4",
-            "thumbnailUrl": "/brand/techno-thumb3.jpg",
+            "title": "ClipCut AI Studio — Hilarious Dialogue & Ending Moment",
+            "hook": "WAIT FOR THE ENDING 😂",
+            "channel": "ClipCut Studio",
+            "file": "showcase-3.mp4",
+            "cover": "showcase-3.jpg",
+            "videoUrl": "/brand/showcase-3.mp4",
+            "thumbnailUrl": "/brand/showcase-3.jpg",
             "score": 94,
             "virality_score": 94,
             "duration": 18,
@@ -89,8 +95,8 @@ TECHNO_METADATA = {
             "captions": "Clean Minimal",
             "style": "clean",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "FunnyMoments", "GTA6Ending", "ComedyShorts"],
-            "tags": ["funny gta moments", "techno comedy", "shorts feed"]
+            "hashtags": ["Shorts", "FunnyMoments", "ViralEnding", "ComedyShorts"],
+            "tags": ["funny moments", "comedy shorts", "clipcut", "shorts feed"]
         }
     ]
 }
@@ -102,8 +108,8 @@ def extract_metadata(url: str):
     channel = "Creator Stream"
     raw_thumb = None
 
-    if not url or "1O_GCgCu-j4" in url or "techno" in url.lower():
-        return TECHNO_METADATA["title"], TECHNO_METADATA["channel"], None
+    if not url or "demo" in url.lower() or "showcase" in url.lower():
+        return CLIPCUT_DEMO_METADATA["title"], CLIPCUT_DEMO_METADATA["channel"], None
 
     try:
         import yt_dlp
@@ -129,19 +135,19 @@ def process_url(url: str, output_dir=None) -> dict:
     target_dir.mkdir(parents=True, exist_ok=True)
     clean_url = (url or "").strip()
 
-    # If Techno Gamerz link or empty demo link, return instant pre-rendered clips
-    if not clean_url or "1O_GCgCu-j4" in clean_url or "techno" in clean_url.lower():
+    # If empty demo link or sample showcase link, return instant pre-rendered clips
+    if not clean_url or "demo" in clean_url.lower() or "showcase" in clean_url.lower():
         return {
             "ok": True,
-            "id": TECHNO_METADATA["id"],
-            "title": TECHNO_METADATA["title"],
-            "channel": TECHNO_METADATA["channel"],
-            "uploader": TECHNO_METADATA["uploader"],
-            "videoUrl": TECHNO_METADATA["clips"][0]["videoUrl"],
-            "thumbnailUrl": TECHNO_METADATA["clips"][0]["thumbnailUrl"],
-            "viralityScore": TECHNO_METADATA["clips"][0]["virality_score"],
-            "duration": TECHNO_METADATA["clips"][0]["duration"],
-            "clips": TECHNO_METADATA["clips"]
+            "id": CLIPCUT_DEMO_METADATA["id"],
+            "title": CLIPCUT_DEMO_METADATA["title"],
+            "channel": CLIPCUT_DEMO_METADATA["channel"],
+            "uploader": CLIPCUT_DEMO_METADATA["uploader"],
+            "videoUrl": CLIPCUT_DEMO_METADATA["clips"][0]["videoUrl"],
+            "thumbnailUrl": CLIPCUT_DEMO_METADATA["clips"][0]["thumbnailUrl"],
+            "viralityScore": CLIPCUT_DEMO_METADATA["clips"][0]["virality_score"],
+            "duration": CLIPCUT_DEMO_METADATA["clips"][0]["duration"],
+            "clips": CLIPCUT_DEMO_METADATA["clips"]
         }
 
     url_hash = hashlib.md5(clean_url.encode("utf-8")).hexdigest()[:8]
@@ -172,11 +178,11 @@ def process_url(url: str, output_dir=None) -> dict:
             subprocess.run(cmd_dl, timeout=30, check=True, capture_output=True)
         except Exception as e:
             print(f"Download section fallback: {e}", file=sys.stderr)
-            fallback = target_dir / "techno_raw_master.mp4"
+            fallback = target_dir / "showcase-1.mp4"
             if fallback.exists():
                 shutil.copy2(fallback, raw_source)
             else:
-                raw_source = target_dir / "techno-clip1.mp4"
+                raw_source = target_dir / "showcase-1.mp4"
 
     # Define 3 distinct viral segments
     segments = [
@@ -228,16 +234,16 @@ def process_url(url: str, output_dir=None) -> dict:
             except Exception as e:
                 print(f"FFmpeg render error on seg {num}: {e}", file=sys.stderr)
 
-        final_video_url = f"/brand/{out_clip_name}" if out_clip_path.exists() else f"/brand/techno-clip{num}.mp4"
-        final_thumb_url = f"/brand/{out_thumb_name}" if out_thumb_path.exists() else f"/brand/techno-thumb{num}.jpg"
+        final_video_url = f"/brand/{out_clip_name}" if out_clip_path.exists() else f"/brand/showcase-{num}.mp4"
+        final_thumb_url = f"/brand/{out_thumb_name}" if out_thumb_path.exists() else f"/brand/showcase-{num}.jpg"
 
         clips.append({
             "id": f"clip{num:02d}",
             "title": f"{title} — {seg['suffix']}",
             "hook": seg["caption"],
             "channel": channel,
-            "file": out_clip_name if out_clip_path.exists() else f"techno-clip{num}.mp4",
-            "cover": out_thumb_name if out_thumb_path.exists() else f"techno-thumb{num}.jpg",
+            "file": out_clip_name if out_clip_path.exists() else f"showcase-{num}.mp4",
+            "cover": out_thumb_name if out_thumb_path.exists() else f"showcase-{num}.jpg",
             "videoUrl": final_video_url,
             "thumbnailUrl": final_thumb_url,
             "score": seg["virality"],

@@ -1,3 +1,9 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 import os
 import shutil
 import json
@@ -9,28 +15,35 @@ u = auth.local_user()
 uid = u.id
 
 user_jobs_dir = config.user_dir(uid) / "jobs"
-job_id = "20261122-120000-technogta6"
+job_id = "20261122-120000-clipcutdemo"
 job_dir = user_jobs_dir / job_id
 clips_dir = job_dir / "clips"
 clips_dir.mkdir(parents=True, exist_ok=True)
 
 brand_dir = config.ROOT / "web" / "brand"
 
-# Copy media files into clips_dir
-shutil.copy2(brand_dir / "techno-thumb.jpg", job_dir / "thumb.jpg")
-shutil.copy2(brand_dir / "techno-clip1.mp4", clips_dir / "clip01.mp4")
-shutil.copy2(brand_dir / "techno-thumb1.jpg", clips_dir / "clip01.jpg")
-shutil.copy2(brand_dir / "techno-clip2.mp4", clips_dir / "clip02.mp4")
-shutil.copy2(brand_dir / "techno-thumb2.jpg", clips_dir / "clip02.jpg")
-shutil.copy2(brand_dir / "techno-clip3.mp4", clips_dir / "clip03.mp4")
-shutil.copy2(brand_dir / "techno-thumb3.jpg", clips_dir / "clip03.jpg")
+# Copy showcase media files into job and clips
+if (brand_dir / "showcase-1.jpg").exists():
+    shutil.copy2(brand_dir / "showcase-1.jpg", job_dir / "thumb.jpg")
+if (brand_dir / "showcase-1.mp4").exists():
+    shutil.copy2(brand_dir / "showcase-1.mp4", clips_dir / "clip01.mp4")
+if (brand_dir / "showcase-1.jpg").exists():
+    shutil.copy2(brand_dir / "showcase-1.jpg", clips_dir / "clip01.jpg")
+if (brand_dir / "showcase-2.mp4").exists():
+    shutil.copy2(brand_dir / "showcase-2.mp4", clips_dir / "clip02.mp4")
+if (brand_dir / "showcase-2.jpg").exists():
+    shutil.copy2(brand_dir / "showcase-2.jpg", clips_dir / "clip02.jpg")
+if (brand_dir / "showcase-3.mp4").exists():
+    shutil.copy2(brand_dir / "showcase-3.mp4", clips_dir / "clip03.mp4")
+if (brand_dir / "showcase-3.jpg").exists():
+    shutil.copy2(brand_dir / "showcase-3.jpg", clips_dir / "clip03.jpg")
 
 job_data = {
     "id": job_id,
     "user": uid,
-    "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3",
-    "uploader": "Techno Gamerz",
-    "channel": "Techno Gamerz",
+    "title": "ClipCut AI Studio — Viral AI Shorts Showcase",
+    "uploader": "ClipCut Studio",
+    "channel": "ClipCut Studio",
     "kind": "video",
     "creator": "caseoh",
     "status": "done",
@@ -41,8 +54,8 @@ job_data = {
     "thumb": "thumb.jpg",
     "source": {
         "type": "link",
-        "url": "https://youtu.be/1O_GCgCu-j4",
-        "name": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3"
+        "url": "https://github.com/CM-Studio77/Clipcut",
+        "name": "ClipCut AI Studio Viral Showcase"
     },
     "options": {
         "max_clips": 3,
@@ -56,7 +69,7 @@ job_data = {
     "clips": [
         {
             "id": "clip01",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Viral Reaction & Intense Hook",
+            "title": "ClipCut AI Studio — High-Octane Reaction & Viral Hook",
             "hook": "INSANE REACTION MOMENT",
             "score": 99,
             "virality_score": 99,
@@ -72,12 +85,12 @@ job_data = {
             "captions": "MrBeast Bold",
             "layout": "split_bottom",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "ViralShorts", "GTA6", "TechnoGamerz", "Gaming"],
-            "tags": ["gta 6", "techno gamerz", "gaming shorts", "viral shorts"]
+            "hashtags": ["Shorts", "ViralShorts", "ClipCut", "AIStudio", "Gaming"],
+            "tags": ["clipcut", "viral shorts", "ai video generator", "trending shorts"]
         },
         {
             "id": "clip02",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Police Escape & High-Speed Chase",
+            "title": "ClipCut AI Studio — High-Speed Action & Mission Climax",
             "hook": "HIGH-SPEED CHASE & ESCAPE",
             "score": 96,
             "virality_score": 96,
@@ -93,13 +106,13 @@ job_data = {
             "captions": "Hormozi Pop",
             "layout": "split_bottom",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "PoliceChase", "GTA6Gameplay", "Viral"],
-            "tags": ["gta 6 police chase", "techno gamerz gta", "action clips"]
+            "hashtags": ["Shorts", "ActionClimax", "EpicMoments", "Viral"],
+            "tags": ["action clips", "gaming highlights", "viral clips", "clipcut ai"]
         },
         {
             "id": "clip03",
-            "title": "MY GIRLFRIEND IS BACK | GTA 6 GAMEPLAY #3 — Hilarious Dialogue & Ending Moment",
-            "hook": "WAIT FOR THE ENDING",
+            "title": "ClipCut AI Studio — Hilarious Dialogue & Ending Moment",
+            "hook": "WAIT FOR THE ENDING 😂",
             "score": 94,
             "virality_score": 94,
             "tag": "FUNNY MOMENT",
@@ -114,8 +127,8 @@ job_data = {
             "captions": "Clean Minimal",
             "layout": "split_bottom",
             "ratio": "9:16 Vertical HD",
-            "hashtags": ["Shorts", "FunnyMoments", "GTA6Ending", "ComedyShorts"],
-            "tags": ["funny gta moments", "techno comedy", "shorts feed"]
+            "hashtags": ["Shorts", "FunnyMoments", "ViralEnding", "ComedyShorts"],
+            "tags": ["funny moments", "comedy shorts", "clipcut", "shorts feed"]
         }
     ],
     "ai": {
@@ -127,4 +140,4 @@ job_data = {
 
 job_file = job_dir / "job.json"
 job_file.write_text(json.dumps(job_data, indent=2), encoding="utf-8")
-print(f"Successfully seeded job {job_id} at {job_file}!")
+print(f"Successfully seeded clean demo job {job_id}!")

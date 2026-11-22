@@ -11,3 +11,7 @@ The edit uses at most 2 whooshes per clip, all at low volume under the voice:
 **Your own sounds by mood** (shock, funny, fear, attention ...) go in the `sounds` folder of the
 ClipKaro folder, not here: run `python run.py sfx` (see docs/usage.md, "Sound effects by mood").
 Make sure you have the rights to any sound you add or publish.
+
+
+---
+*ClipCut AI Studio by [CM Studio](https://github.com/CM-Studio77) • Repository: [CM-Studio77/Clipcut](https://github.com/CM-Studio77/Clipcut)*

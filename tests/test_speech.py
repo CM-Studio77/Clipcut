@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """Speech models for other spoken languages (Arabic first): downloading one only when asked, removing it, choosing
 the language for a video or a creator, Arabic words, and the second machine never using the wrong language's model.
 Runs against the code directly, with its own empty data folder; nothing is downloaded."""

@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """PeakCut's folder: said plainly when its drive is full, and movable. A move is chosen in the dashboard and done at
 the next start, before anything is open. Uses its own temporary folders; nothing else is touched."""
 import json, os, subprocess, sys, tempfile

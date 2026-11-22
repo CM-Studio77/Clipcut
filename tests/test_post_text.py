@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# ClipCut AI Studio
+# Author: CM Studio (https://github.com/CM-Studio77)
+# Repository: https://github.com/CM-Studio77/Clipcut
+# Copyright (c) 2026 CM Studio. All rights reserved.
+# Licensed under Apache License 2.0. See LICENSE for details.
+# --------------------------------------------------------------------------
 """The post text of a clip: the AI writes a new title, description and hashtags on request, the person can change
 them, and posting uses what they saved, all without making the clip again. No AI key is needed: the AI is replaced."""
 import json
