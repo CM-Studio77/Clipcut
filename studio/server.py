@@ -35,7 +35,7 @@ def _quiet(fn):
         print(f"  {e}", flush=True)
 
 
-app = FastAPI(title="PeakCut", docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="ClipCut", docs_url=None, redoc_url=None, openapi_url=None)
 WEB = config.ROOT / "web"
 OPEN = ("/api/auth/", "/pub/", "/api/public", "/auth/google/", "/auth/verify", "/brand/", "/assets/", "/healthz", "/favicon.ico", "/robots.txt", "/sitemap.xml")
 PAGES = {"/landing": "landing.html", "/": "landing.html", "/login": "auth.html", "/signup": "auth.html", "/reset": "reset.html",
@@ -1636,6 +1636,125 @@ def posts_history():
     return posting.history(100)
 
 
+# ================================================================ sfx & mood transitions
+@app.get("/api/sfx")
+def sfx_get(role: str = "", pick: bool = False, salt: str = "", prefer_len: float | None = None):
+    from . import sfx
+    if pick and role:
+        chosen = sfx.pick(role, prefer_len=prefer_len, salt=salt)
+        return {"picked": chosen}
+    cat = sfx.scan()
+    items = [it for it in cat.get("items", []) if not role or it["role"] == role]
+    return {"moods": sfx.moods_available(), "items": items}
+
+
+@app.post("/api/sfx")
+def sfx_post(body: dict = Body(...)):
+    from . import sfx
+    action = str(body.get("action", "scan")).lower()
+    if action == "add":
+        src = body.get("path")
+        mood = body.get("mood")
+        if not src or not mood:
+            raise HTTPException(400, "path and mood are required to add sound")
+        try:
+            return sfx.add_sound(src, mood)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    elif action == "remove":
+        name = body.get("name")
+        if not name:
+            raise HTTPException(400, "name is required to remove sound")
+        ok = sfx.remove_sound(name)
+        return {"removed": ok, "name": name}
+    elif action == "pick":
+        role = str(body.get("role", ""))
+        salt = str(body.get("salt", ""))
+        prefer_len = body.get("prefer_len")
+        return {"picked": sfx.pick(role, prefer_len=prefer_len, salt=salt)}
+    return sfx.scan()
+
+
+# ================================================================ Hinglish romanization engine
+@app.get("/api/romanize")
+def romanize_get(text: str = ""):
+    from . import romanize
+    if not text:
+        return {"text": "", "romanized": ""}
+    return {"text": text, "romanized": romanize.romanize_text(text)}
+
+
+@app.post("/api/romanize")
+def romanize_post(body: dict = Body(...)):
+    from . import romanize
+    text = body.get("text")
+    words = body.get("words")
+    respell = body.get("respell")
+    custom_map = body.get("custom_map")
+
+    if respell:
+        return {"original": respell, "respelled": romanize.respelled(respell, custom_map) or respell}
+    if words and isinstance(words, list):
+        res_words, missing = romanize.apply(words, custom_map)
+        return {"words": res_words, "missing": missing}
+    if text is not None:
+        return {"text": text, "romanized": romanize.romanize_text(str(text), custom_map)}
+    raise HTTPException(400, "text, words, or respell parameter is required")
+
+
+# ================================================================ 3D Noto emoji for captions
+@app.get("/api/emoji")
+def emoji_get(char: str = "", code: str = "", text: str = "", format: str = ""):
+    from . import emoji
+    if text:
+        return {"emojis": emoji.find_emojis(text), "cleaned": emoji.clean_emojis(text)}
+    ch = char or (emoji.code_to_char(code) if code else "")
+    c = code or (emoji.code(char) if char else "")
+    if not ch and not c:
+        return {"sources": emoji.SOURCES, "cache_dir": str(emoji.CACHE)}
+    p = emoji.png(ch) if ch else None
+    if format == "png" and p and p.exists():
+        return FileResponse(p, media_type="image/png")
+    return {
+        "char": ch,
+        "code": c,
+        "cached": bool(p and p.exists()),
+        "data_uri": emoji.emoji_data_uri(ch) if p else None,
+    }
+
+
+@app.post("/api/emoji")
+def emoji_post(body: dict = Body(...)):
+    from . import emoji
+    char = body.get("char")
+    code_val = body.get("code")
+    text = body.get("text")
+    if text:
+        return {"emojis": emoji.find_emojis(text), "cleaned": emoji.clean_emojis(text)}
+    ch = char or (emoji.code_to_char(code_val) if code_val else "")
+    c = code_val or (emoji.code(char) if char else "")
+    if not ch and not c:
+        raise HTTPException(400, "char, code, or text is required")
+    p = emoji.png(ch)
+    return {
+        "char": ch,
+        "code": c,
+        "cached": bool(p and p.exists()),
+        "data_uri": emoji.emoji_data_uri(ch) if p else None,
+    }
+
+
+# ================================================================ virality & retention scoring
+@app.post("/api/virality/score")
+def virality_score(body: dict = Body(...)):
+    from . import virality
+    text = body.get("text", "")
+    duration = float(body.get("duration", 30.0))
+    hook = body.get("hook", "")
+    return virality.predict_retention_score(text, duration_seconds=duration, hook_text=hook)
+
+
+
 @app.get("/pub/{token}.mp4")
 def public_clip(token: str):
     """A clip for a platform to fetch while posting it: one clip, one hour, signed (see accounts.clip_link)."""
@@ -1872,10 +1991,10 @@ def admin_delete_user(request: Request, uid: str, body: dict = Body(...)):
 
 
 def main():
-    print(f"\n  PeakCut is running:  {config.PUBLIC_URL}\n")
+    print(f"\n  ClipCut is running:  {config.PUBLIC_URL}\n")
     if not config.ACCOUNTS and (config.HTTPS or config.HOST not in ("127.0.0.1", "localhost", "::1")):
-        print("  Sign-in is off, so anyone who can reach this address can use PeakCut and its AI key.\n"
-              "  On a server other people can reach, set PEAKCUT_ACCOUNTS=1 in .env.\n", flush=True)
+        print("  Sign-in is off, so anyone who can reach this address can use ClipCut and its AI key.\n"
+              "  On a server other people can reach, set CLIPCUT_ACCOUNTS=1 in .env.\n", flush=True)
     if config.env("PEAKCUT_AUTO_RELOAD") == "1":
         # restart by itself whenever the server code changes (pages in web/ never need a restart)
         uvicorn.run("studio.server:app", host=config.HOST, port=config.PORT, log_level="warning", backlog=4096, reload=True,

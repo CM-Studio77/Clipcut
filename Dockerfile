@@ -1,4 +1,4 @@
-# PeakCut: AI Video Clipping & Shorts Studio
+# ClipCut: Autonomous AI Video Clipping & Shorts Studio
 FROM python:3.11-slim
 
 RUN apt-get update \
@@ -23,7 +23,11 @@ RUN chown -R user:user /app
 
 USER user
 
-ENV PEAKCUT_DATA=/data \
+ENV CLIPCUT_DATA=/data \
+    CLIPCUT_HOST=0.0.0.0 \
+    CLIPCUT_PORT=7860 \
+    CLIPCUT_TRUST_PROXY=1 \
+    PEAKCUT_DATA=/data \
     PEAKCUT_HOST=0.0.0.0 \
     PEAKCUT_PORT=7860 \
     PEAKCUT_TRUST_PROXY=1 \

@@ -1,0 +1,212 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradients -->
+    <radialGradient id="og-glow-violet" cx="20%" cy="25%" r="65%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-glow-cyan" cx="80%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#00f3ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-glow-emerald" cx="50%" cy="85%" r="50%">
+      <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#00ff9d" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="og-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1"/>
+    </pattern>
+
+    <!-- Faceted Play Icon Gradients -->
+    <linearGradient id="og-p1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="og-p2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="og-p3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+
+    <!-- Text Gradients -->
+    <linearGradient id="og-title-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="og-cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="og-card-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#151824"/>
+      <stop offset="100%" stop-color="#0F111A"/>
+    </linearGradient>
+    <linearGradient id="og-phone-screen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E2333"/>
+      <stop offset="100%" stop-color="#0B0D14"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Obsidian Canvas -->
+  <rect width="1200" height="630" fill="#0A0B10"/>
+  <rect width="1200" height="630" fill="url(#og-grid)"/>
+
+  <!-- Glow Layers -->
+  <rect width="1200" height="630" fill="url(#og-glow-violet)"/>
+  <rect width="1200" height="630" fill="url(#og-glow-cyan)"/>
+  <rect width="1200" height="630" fill="url(#og-glow-emerald)"/>
+
+  <!-- Outer Glass Frame Accent -->
+  <rect x="24" y="24" width="1152" height="582" rx="28" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" fill="none"/>
+
+  <!-- LEFT COLUMN: Brand Hero Info -->
+  <!-- Brand Header Badge -->
+  <g transform="translate(80, 84)">
+    <!-- Pill Container -->
+    <rect width="260" height="36" rx="18" fill="rgba(168, 85, 247, 0.12)" stroke="rgba(168, 85, 247, 0.4)"/>
+    <circle cx="18" cy="18" r="5" fill="#00ff9d"/>
+    <text x="32" y="23" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="13" font-weight="700" fill="#F8FAFC" letter-spacing="0.5">AUTONOMOUS AI CLIPPER</text>
+  </g>
+
+  <!-- Main Logo Mark + Typo -->
+  <g transform="translate(80, 145)">
+    <!-- Big Cyber Faceted Play Icon -->
+    <g transform="scale(1.9) translate(-4, -4)">
+      <path d="M4 4 L22 23 L4 42 Z" fill="url(#og-p1)"/>
+      <path d="M22 23 L42 23 L18 8 Z" fill="url(#og-p2)"/>
+      <path d="M22 23 L42 23 L22 38 L4 42 Z" fill="url(#og-p3)" opacity="0.95"/>
+      <circle cx="22" cy="23" r="2.5" fill="#FFFFFF"/>
+    </g>
+
+    <!-- Main Title -->
+    <text x="96" y="52" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="64" font-weight="900" fill="url(#og-title-grad)" letter-spacing="-1.5">
+      Clip<tspan fill="url(#og-cyan-grad)">Cut</tspan>
+    </text>
+    <text x="98" y="78" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="14" font-weight="700" fill="#94A3B8" letter-spacing="4">
+      AI VIDEO &amp; LIVE STREAM STUDIO
+    </text>
+  </g>
+
+  <!-- Tagline & Description -->
+  <g transform="translate(80, 275)">
+    <text x="0" y="0" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="34" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
+      Streams to Viral Shorts While You Sleep.
+    </text>
+    <text x="0" y="38" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="18" font-weight="400" fill="#94A3B8" width="540">
+      Autonomously record, judge virality, reframe faces (9:16), burn kinetic
+    </text>
+    <text x="0" y="64" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="18" font-weight="400" fill="#94A3B8">
+      captions with 3D emojis, and auto-publish to Shorts, Reels &amp; TikTok.
+    </text>
+  </g>
+
+  <!-- Feature Pills Grid -->
+  <g transform="translate(80, 410)">
+    <!-- Pill 1: 24/7 Live Monitoring -->
+    <rect x="0" y="0" width="186" height="38" rx="10" fill="rgba(0, 243, 255, 0.08)" stroke="rgba(0, 243, 255, 0.3)"/>
+    <text x="14" y="24" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#00f3ff">⚡ 24/7 Live Stream Scout</text>
+
+    <!-- Pill 2: Dual-Judge AI -->
+    <rect x="198" y="0" width="176" height="38" rx="10" fill="rgba(168, 85, 247, 0.08)" stroke="rgba(168, 85, 247, 0.3)"/>
+    <text x="212" y="24" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#C084FC">🧠 Dual-Judge Virality</text>
+
+    <!-- Pill 3: Active Speaker -->
+    <rect x="386" y="0" width="180" height="38" rx="10" fill="rgba(0, 255, 157, 0.08)" stroke="rgba(0, 255, 157, 0.3)"/>
+    <text x="400" y="24" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#00ff9d">🎯 Face-Tracking 9:16</text>
+
+    <!-- Pill 4: Kinetic Captions -->
+    <rect x="0" y="48" width="186" height="38" rx="10" fill="rgba(255, 183, 0, 0.08)" stroke="rgba(255, 183, 0, 0.3)"/>
+    <text x="14" y="72" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#FFB700">🔥 3D Emojis &amp; Hinglish</text>
+
+    <!-- Pill 5: Multi-Platform -->
+    <rect x="198" y="48" width="220" height="38" rx="10" fill="rgba(255, 51, 102, 0.08)" stroke="rgba(255, 51, 102, 0.3)"/>
+    <text x="212" y="72" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#FF3366">🚀 Auto-Publish Shorts/Reels</text>
+  </g>
+
+  <!-- Supported Platforms Row -->
+  <g transform="translate(80, 545)">
+    <text x="0" y="16" font-family="'Geist', sans-serif" font-size="13" font-weight="600" fill="#64748B" letter-spacing="1.5">WORKS WITH</text>
+    <text x="110" y="16" font-family="'Geist', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">YouTube</text>
+    <circle cx="185" cy="12" r="2.5" fill="#475569"/>
+    <text x="200" y="16" font-family="'Geist', sans-serif" font-size="14" font-weight="700" fill="#A855F7">Twitch</text>
+    <circle cx="260" cy="12" r="2.5" fill="#475569"/>
+    <text x="275" y="16" font-family="'Geist', sans-serif" font-size="14" font-weight="700" fill="#00FF9D">Kick</text>
+    <circle cx="320" cy="12" r="2.5" fill="#475569"/>
+    <text x="335" y="16" font-family="'Geist', sans-serif" font-size="14" font-weight="700" fill="#38BDF8">Direct Video Upload</text>
+  </g>
+
+  <!-- RIGHT COLUMN: Premium 9:16 Mockup & Telemetry Card -->
+  <!-- Glowing Background Backdrop Behind Phone -->
+  <g transform="translate(730, 60)">
+    <!-- Elevated Card Glow -->
+    <rect x="-15" y="-15" width="370" height="510" rx="36" fill="rgba(0, 243, 255, 0.05)" filter="blur(20px)"/>
+
+    <!-- Outer Phone Shell (9:16 Aspect) -->
+    <rect x="30" y="10" width="280" height="490" rx="32" fill="#151824" stroke="rgba(255, 255, 255, 0.16)" stroke-width="3"/>
+
+    <!-- Inner Screen Display -->
+    <rect x="42" y="22" width="256" height="466" rx="24" fill="url(#og-phone-screen)"/>
+
+    <!-- Live Badge -->
+    <rect x="58" y="38" width="68" height="24" rx="12" fill="#FF3366"/>
+    <circle cx="70" cy="50" r="4" fill="#FFFFFF"/>
+    <text x="80" y="55" font-family="'Geist', sans-serif" font-size="11" font-weight="800" fill="#FFFFFF">LIVE</text>
+
+    <!-- Virality Score Pill Top Right -->
+    <rect x="202" y="38" width="82" height="24" rx="12" fill="rgba(0, 255, 157, 0.2)" stroke="#00ff9d" stroke-width="1"/>
+    <text x="214" y="55" font-family="'Geist', sans-serif" font-size="11" font-weight="800" fill="#00ff9d">98/100 🔥</text>
+
+    <!-- Active Speaker Face Tracking Wireframe -->
+    <rect x="80" y="110" width="180" height="180" rx="20" fill="rgba(0, 243, 255, 0.06)" stroke="#00f3ff" stroke-width="2" stroke-dasharray="6 4"/>
+    <circle cx="170" cy="180" r="44" fill="rgba(255, 255, 255, 0.1)"/>
+    <rect x="156" y="130" width="28" height="18" rx="6" fill="#00f3ff"/>
+    <text x="160" y="142" font-family="'Geist', sans-serif" font-size="9" font-weight="800" fill="#050608">SPEAKER</text>
+
+    <!-- Audio Waveform Visualizer -->
+    <g transform="translate(70, 316)">
+      <rect x="0" y="10" width="4" height="20" rx="2" fill="#00f3ff"/>
+      <rect x="8" y="4" width="4" height="32" rx="2" fill="#00f3ff"/>
+      <rect x="16" y="0" width="4" height="40" rx="2" fill="#00ff9d"/>
+      <rect x="24" y="6" width="4" height="28" rx="2" fill="#00f3ff"/>
+      <rect x="32" y="14" width="4" height="12" rx="2" fill="#00f3ff"/>
+      <rect x="40" y="2" width="4" height="36" rx="2" fill="#ffb700"/>
+      <rect x="48" y="0" width="4" height="40" rx="2" fill="#ff3366"/>
+      <rect x="56" y="8" width="4" height="24" rx="2" fill="#00f3ff"/>
+      <rect x="64" y="12" width="4" height="16" rx="2" fill="#00f3ff"/>
+      <rect x="72" y="2" width="4" height="36" rx="2" fill="#a855f7"/>
+      <rect x="80" y="0" width="4" height="40" rx="2" fill="#a855f7"/>
+      <rect x="88" y="6" width="4" height="28" rx="2" fill="#00f3ff"/>
+      <rect x="96" y="10" width="4" height="20" rx="2" fill="#00f3ff"/>
+      <rect x="104" y="4" width="4" height="32" rx="2" fill="#00ff9d"/>
+      <rect x="112" y="0" width="4" height="40" rx="2" fill="#00ff9d"/>
+      <rect x="120" y="8" width="4" height="24" rx="2" fill="#00f3ff"/>
+      <rect x="128" y="14" width="4" height="12" rx="2" fill="#00f3ff"/>
+      <rect x="136" y="4" width="4" height="32" rx="2" fill="#00f3ff"/>
+      <rect x="144" y="0" width="4" height="40" rx="2" fill="#00f3ff"/>
+      <rect x="152" y="6" width="4" height="28" rx="2" fill="#00f3ff"/>
+      <rect x="160" y="12" width="4" height="16" rx="2" fill="#00f3ff"/>
+      <rect x="168" y="4" width="4" height="32" rx="2" fill="#00f3ff"/>
+      <rect x="176" y="0" width="4" height="40" rx="2" fill="#00ff9d"/>
+      <rect x="184" y="10" width="4" height="20" rx="2" fill="#00f3ff"/>
+      <rect x="192" y="15" width="4" height="10" rx="2" fill="#00f3ff"/>
+    </g>
+
+    <!-- Kinetic Captions Overlay -->
+    <rect x="52" y="375" width="236" height="52" rx="14" fill="rgba(10, 11, 16, 0.88)" stroke="rgba(255, 255, 255, 0.12)"/>
+    <text x="70" y="407" font-family="'Archivo Black', 'Poppins', sans-serif" font-size="17" font-weight="900" fill="#FFFFFF">
+      THIS IS <tspan fill="#00f3ff">ACTUALLY</tspan> <tspan fill="#FFB700">INSANE</tspan> 🤯
+    </text>
+
+    <!-- Bottom Action Ribbon -->
+    <g transform="translate(56, 442)">
+      <rect width="228" height="32" rx="8" fill="rgba(0, 243, 255, 0.14)" stroke="rgba(0, 243, 255, 0.4)"/>
+      <text x="54" y="21" font-family="'Geist', sans-serif" font-size="12" font-weight="700" fill="#00f3ff">READY TO PUBLISH ➔</text>
+    </g>
+  </g>
+</svg>

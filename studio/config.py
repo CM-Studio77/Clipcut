@@ -16,11 +16,38 @@ def _load_dotenv():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            if k.startswith("PEAKCUT_"):
+                clip_k = "CLIPCUT_" + k[len("PEAKCUT_"):]
+                if clip_k not in os.environ and k not in os.environ:
+                    os.environ[k] = v
+                    os.environ[clip_k] = v
+            elif k.startswith("CLIPCUT_"):
+                peak_k = "PEAKCUT_" + k[len("CLIPCUT_"):]
+                if k not in os.environ and peak_k not in os.environ:
+                    os.environ[k] = v
+                    os.environ[peak_k] = v
+            else:
+                os.environ.setdefault(k, v)
 
 
 _load_dotenv()
-env = os.environ.get
+
+
+def env(key: str, default=None):
+    """Retrieve setting with bidirectional CLIPCUT_* and PEAKCUT_* fallback support."""
+    if key.startswith("PEAKCUT_"):
+        clipcut_key = "CLIPCUT_" + key[len("PEAKCUT_"):]
+        if clipcut_key in os.environ:
+            return os.environ[clipcut_key]
+        return os.environ.get(key, default)
+    elif key.startswith("CLIPCUT_"):
+        if key in os.environ:
+            return os.environ[key]
+        peakcut_key = "PEAKCUT_" + key[len("CLIPCUT_"):]
+        return os.environ.get(peakcut_key, default)
+    return os.environ.get(key, default)
 
 
 _kept: dict = {}
@@ -130,7 +157,7 @@ ASR_ENGINE = env("PEAKCUT_ASR_ENGINE", "whisper").strip().lower()
 WHISPER_MODEL = env("PEAKCUT_WHISPER_MODEL", "base").strip()
 ASR_MODEL_NAME = env("PEAKCUT_ASR_MODEL", "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8")
 ASR_MODEL_DIR = MODELS_DIR / ASR_MODEL_NAME
-DATABASE_URL = env("DATABASE_URL") or f"sqlite:///{(DATA_DIR / 'peakcut.db').as_posix()}"
+DATABASE_URL = env("DATABASE_URL") or f"sqlite:///{(DATA_DIR / ('clipcut.db' if (DATA_DIR / 'clipcut.db').exists() else 'peakcut.db')).as_posix()}"
 # Commercials and "be right back" screens are stitched into streams. A clip taken from one is worthless, so those
 # seconds can be found and left out. It is off by default: it reads the whole video once, which is not free, and
 # a video that is meant to be still must not lose its clips. PEAKCUT_SKIP_STATIC=1 turns it on.
@@ -215,9 +242,9 @@ SMTP_HOST = env("PEAKCUT_SMTP_HOST", "")
 SMTP_PORT = int(env("PEAKCUT_SMTP_PORT", "587"))
 SMTP_USER = env("PEAKCUT_SMTP_USER", "")
 MAIL_FROM = env("PEAKCUT_MAIL_FROM", "")
-CONTACT_EMAIL = env("PEAKCUT_CONTACT_EMAIL", "")
-LEGAL_NAME = env("PEAKCUT_LEGAL_NAME", "")            # the business that runs PeakCut, for the legal pages
-LEGAL_COUNTRY = env("PEAKCUT_LEGAL_COUNTRY", "")      # whose law applies, for the terms
+CONTACT_EMAIL = env("CLIPCUT_CONTACT_EMAIL") or env("PEAKCUT_CONTACT_EMAIL", "support@clipcut.ai")
+LEGAL_NAME = env("CLIPCUT_LEGAL_NAME") or env("PEAKCUT_LEGAL_NAME", "ClipCut")
+LEGAL_COUNTRY = env("CLIPCUT_LEGAL_COUNTRY") or env("PEAKCUT_LEGAL_COUNTRY", "")
 # Set to 1 on a public site with email set up: password sign-ups must then confirm their address before clipping.
 VERIFY_EMAIL = env("PEAKCUT_VERIFY_EMAIL", "0") == "1"
 

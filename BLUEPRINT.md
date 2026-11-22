@@ -2,7 +2,7 @@
 
 **Document Version**: 2.5.0-PRO  
 **Target Milestone**: Milestone 1 (Architectural Blueprint & Design System Specification)  
-**Workspace Directory**: `C:\Users\Kesha\Downloads\ai\PeakCut`  
+**Workspace Directory**: `Clipcut`  
 **Status**: APPROVED SPECIFICATION  
 **Primary Deliverable For**: PeakCut AI Creator Workstation Transformation  
 

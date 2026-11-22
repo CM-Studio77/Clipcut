@@ -1,4 +1,4 @@
-"""Verify 100% match between local PeakCut and https://peakcut.haziqqasmi.com."""
+"""Verify 100% match between local PeakCut and https://clipcut.ai."""
 import os
 import sys
 from pathlib import Path
@@ -17,7 +17,7 @@ def check(name, condition, details=""):
         failures.append(name)
 
 print("=" * 60)
-print("VERIFYING PEAKCUT 100% MATCH WITH https://peakcut.haziqqasmi.com")
+print("VERIFYING PEAKCUT 100% MATCH WITH https://clipcut.ai")
 print("=" * 60)
 
 # 1. Brand Assets verification
@@ -54,7 +54,7 @@ if ascii_local.exists() and ascii_scraped.exists():
 
 # 3. Landing Page verification
 landing_template = (WEB / "landing.html").read_text(encoding="utf-8")
-rendered_landing = landing_template.replace("{{SITE}}", "https://peakcut.haziqqasmi.com")
+rendered_landing = landing_template.replace("{{SITE}}", "https://clipcut.ai")
 remote_landing = (SCRAPED / "index.html").read_text(encoding="utf-8")
 check("Landing page (landing.html) renders 100% identical to scraped landing", rendered_landing == remote_landing)
 
@@ -84,7 +84,7 @@ for p in ["terms", "privacy", "refunds", "acceptable-use"]:
         "{{CONTACT}}": "the contact details on our website",
         "{{PAGE}}": p,
         "{{PAGE_PATH}}": p,
-        "{{SITE}}": "https://peakcut.haziqqasmi.com",
+        "{{SITE}}": "https://clipcut.ai",
         "{{NAME}}": "PeakCut",
         "{{LAW}}": "the laws of the country where PeakCut's operator is established",
         "{{TITLE}}": title,

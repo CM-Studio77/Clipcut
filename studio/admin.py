@@ -3,9 +3,10 @@
 Who is an admin is the `is_admin` value on their row in the users table and nothing else. No web request can
 change it, and no email address is special in the code. It is set by hand, on the server:
 
-    python -m studio.admin list
-    python -m studio.admin grant someone@example.com
-    python -m studio.admin revoke someone@example.com
+    clipcut-admin list
+    clipcut-admin grant someone@example.com
+    clipcut-admin revoke someone@example.com
+    # or: python -m studio.admin list
 
 Admins see accounts and AI use. They do not see anyone's videos, clips or connected accounts."""
 import shutil
@@ -169,5 +170,9 @@ def _cli(argv):
     return 2
 
 
-if __name__ == "__main__":
+def main():
     sys.exit(_cli(sys.argv[1:]))
+
+
+if __name__ == "__main__":
+    main()

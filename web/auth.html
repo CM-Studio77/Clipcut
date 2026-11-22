@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in to PeakCut</title>
-<meta name="description" content="Sign in or create your PeakCut account.">
+<title>Sign in to ClipCut</title>
+<meta name="description" content="Sign in or create your ClipCut account.">
 <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,7 +86,7 @@ input::placeholder{color:var(--faint)}
 </head>
 <body>
 <aside class="side">
-  <a href="/" aria-label="PeakCut home"><img src="/brand/logo-light.svg" alt="PeakCut"></a>
+  <a href="/" aria-label="ClipCut home"><img src="/brand/logo-light.svg" alt="ClipCut"></a>
   <div>
     <h1>Clips from every stream, <em>without watching all of it.</em></h1>
     <ul>
@@ -95,10 +95,10 @@ input::placeholder{color:var(--faint)}
       <li><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>$29 for a whole year, one payment, nothing renews</span></li>
     </ul>
   </div>
-  <small>© <span id="year"></span> PeakCut · <a href="/privacy" style="color:inherit">Privacy</a> · <a href="/terms" style="color:inherit">Terms</a></small>
+  <small>© <span id="year"></span> ClipCut · <a href="/privacy" style="color:inherit">Privacy</a> · <a href="/terms" style="color:inherit">Terms</a></small>
 </aside>
 <main class="main"><div class="card">
-  <a href="/"><img class="mobile-logo" src="/brand/logo.svg" alt="PeakCut"></a>
+  <a href="/"><img class="mobile-logo" src="/brand/logo.svg" alt="ClipCut"></a>
   <div class="check" id="check" role="status">
     <div class="ico"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z"/></svg></div>
     <h2>Confirm your email</h2>
@@ -128,7 +128,7 @@ document.getElementById("year").textContent = new Date().getFullYear();
 const $ = id => document.getElementById(id), up = location.pathname === "/signup";
 const next = new URLSearchParams(location.search).get("next");
 const dest = next && /^\/(?![\/\\])[^\\\t\r\n]*$/.test(next) ? next : "/app";
-document.title = up ? "Create your PeakCut account" : "Sign in to PeakCut";
+document.title = up ? "Create your ClipCut account" : "Sign in to ClipCut";
 $("h").textContent = up ? "Create your account" : "Welcome back";
 $("p").textContent = up ? "Start clipping in a couple of minutes." : "Sign in to get back to your clips.";
 $("go").textContent = up ? "Create account" : "Sign in";
@@ -143,7 +143,7 @@ $("pwshow").addEventListener("click", () => {
   $("pwshow").setAttribute("aria-label", on ? "Hide password" : "Show password");
   p.focus();
 });
-$("swap").innerHTML = up ? 'Already have an account? <a href="/login">Sign in</a>' : 'New to PeakCut? <a href="/signup">Create an account</a>';
+$("swap").innerHTML = up ? 'Already have an account? <a href="/login">Sign in</a>' : 'New to ClipCut? <a href="/signup">Create an account</a>';
 $("google").href = "/auth/google/start?next=" + encodeURIComponent(dest);
 const fail = m => { $("err").textContent = m; $("err").classList.add("on"); };
 const qs = new URLSearchParams(location.search);

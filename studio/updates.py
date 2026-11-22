@@ -6,9 +6,9 @@ request to the same address `git` itself uses, which has no hourly allowance to 
 changes does it ask GitHub's API what was added, to show the list. Nothing about this computer or its users is
 sent. The owner sees a notice in the dashboard within a minute or two, with no restart.
 
-    PEAKCUT_UPDATE_REPO     where to look (default: the project's own repository; a fork points at itself)
-    PEAKCUT_UPDATE_BRANCH   which branch (default: main)
-    PEAKCUT_UPDATE_CHECK=0  never look"""
+    CLIPCUT_UPDATE_REPO     where to look (default: the project's own repository; a fork points at itself)
+    CLIPCUT_UPDATE_BRANCH   which branch (default: main)
+    CLIPCUT_UPDATE_CHECK=0  never look"""
 import re
 import threading
 import time
@@ -17,11 +17,11 @@ import httpx
 
 from . import config
 
-REPO = (config.env("PEAKCUT_UPDATE_REPO") or "haziqahmedqasmi/PeakCut").strip().strip("/")
-BRANCH = (config.env("PEAKCUT_UPDATE_BRANCH") or "main").strip()
-ON = config.env("PEAKCUT_UPDATE_CHECK", "1") != "0" and bool(re.fullmatch(r"[\w.\-]+/[\w.\-]+", REPO))
+REPO = (config.env("CLIPCUT_UPDATE_REPO") or config.env("PEAKCUT_UPDATE_REPO") or "CM-Studio77/Clipcut").strip().strip("/")
+BRANCH = (config.env("CLIPCUT_UPDATE_BRANCH") or config.env("PEAKCUT_UPDATE_BRANCH") or "main").strip()
+ON = (config.env("CLIPCUT_UPDATE_CHECK") or config.env("PEAKCUT_UPDATE_CHECK", "1")) != "0" and bool(re.fullmatch(r"[\w.\-]+/[\w.\-]+", REPO))
 EVERY = 60
-UA = {"User-Agent": "PeakCut-update-check"}
+UA = {"User-Agent": "ClipCut-update-check"}
 _state = {"checked": 0.0, "result": None, "seen": "", "notes": None}
 _lock = threading.Lock()
 _started = False

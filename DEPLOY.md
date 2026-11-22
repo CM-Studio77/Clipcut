@@ -1,6 +1,6 @@
-# Deploying PeakCut to a Server
+# Deploying ClipCut to a Server
 
-PeakCut runs seamlessly as three containers on any Linux server: the PeakCut web application, PostgreSQL database, and Caddy (automatic HTTPS reverse proxy).
+ClipCut runs seamlessly as three containers on any Linux server: the ClipCut web application, PostgreSQL database, and Caddy (automatic HTTPS reverse proxy).
 
 ## Hardware & System Requirements
 - **OS**: Ubuntu 22.04 / 24.04 LTS (recommended) with Docker & Docker Compose.
@@ -13,15 +13,15 @@ PeakCut runs seamlessly as three containers on any Linux server: the PeakCut web
 
 1. Clone the repository on your server:
    ```bash
-   git clone https://github.com/CM-Studio77/PeakCut.git
-   cd PeakCut
+   git clone https://github.com/CM-Studio77/Clipcut.git
+   cd Clipcut
    ```
 
 2. Create and customize your `.env` configuration:
    ```bash
    cp .env.example .env
    ```
-   Set `PEAKCUT_DOMAIN=yourdomain.com`, `POSTGRES_PASSWORD`, and your AI API Key (Gemini or OpenAI).
+   Set `CLIPCUT_DOMAIN=yourdomain.com`, `POSTGRES_PASSWORD`, and your AI API Key (Gemini, OpenAI, etc.). Note: `PEAKCUT_DOMAIN` is also supported as a fallback.
 
 3. Launch with Docker Compose:
    ```bash

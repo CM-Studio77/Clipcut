@@ -4,7 +4,7 @@ import urllib.parse
 from bs4 import BeautifulSoup
 import httpx
 
-BASE_URL = "https://peakcut.haziqqasmi.com"
+BASE_URL = "https://clipcut.ai"
 SCRAPE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "scraped_site")
 os.makedirs(SCRAPE_DIR, exist_ok=True)
 
@@ -97,7 +97,7 @@ while queue:
                 val = tag[attr]
                 parsed = urllib.parse.urlparse(val)
                 if parsed.scheme in ("", "http", "https"):
-                    if parsed.netloc in ("", "peakcut.haziqqasmi.com"):
+                    if parsed.netloc in ("", "clipcut.ai"):
                         asset_path = parsed.path
                         if asset_path and asset_path not in visited and not asset_path.startswith("mailto:") and not asset_path.startswith("javascript:"):
                             queue.append(asset_path)

@@ -626,7 +626,7 @@ def export_publish_guide(job) -> Path:
     except Exception:
         pass
     
-    ready_dir = Path(r"C:\Users\Kesha\Downloads\ai\READY_FOR_YOUTUBE")
+    ready_dir = Path(config.env("CLIPCUT_EXPORT_DIR") or config.env("PEAKCUT_EXPORT_DIR") or (config.DATA_DIR / "ready_for_youtube"))
     if ready_dir.is_dir():
         try:
             (ready_dir / f"PUBLISH_GUIDE_{job['id']}.txt").write_text(txt_content, encoding="utf-8")
@@ -654,7 +654,7 @@ def render_one(job, clip, words):
         post = {k: clip[k] for k in ("title", "description", "hashtags", "tags", "hook", "start", "end", "score") if k in clip}
         (d / "clips" / f"{clip['id']}.json").write_text(json.dumps(post, indent=1), encoding="utf-8")
         export_publish_guide(job)
-        ready_dir = Path(r"C:\Users\Kesha\Downloads\ai\READY_FOR_YOUTUBE")
+        ready_dir = Path(config.env("CLIPCUT_EXPORT_DIR") or config.env("PEAKCUT_EXPORT_DIR") or (config.DATA_DIR / "ready_for_youtube"))
         if ready_dir.is_dir() and out.get("file"):
             import shutil
             clip_file = d / "clips" / out["file"]
