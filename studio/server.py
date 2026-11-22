@@ -714,6 +714,26 @@ def list_jobs():
     return [jobs.public(j) for j in jobs.list_jobs()]
 
 
+@app.post("/api/clip/instant")
+async def instant_clip(request: Request):
+    """Reverse-engineered instant 9:16 vertical viral clipping engine from scrap workspace."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    url = data.get("url", "")
+    from . import clip_worker
+    res = clip_worker.process_url(url)
+    return res
+
+
+@app.get("/api/sample-clips")
+def sample_clips():
+    """Returns pre-rendered Techno Gamerz GTA 6 viral shorts for instant zero-wait demo."""
+    from . import clip_worker
+    return clip_worker.TECHNO_METADATA
+
+
 @app.get("/api/jobs/{jid}")
 def get_job(jid: str):
     return jobs.public(_job_or_404(jid))

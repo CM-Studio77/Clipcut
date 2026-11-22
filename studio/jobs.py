@@ -159,11 +159,61 @@ def job_dir(jid) -> Path:
 HIDDEN = ("dir", "user", "source_path", "recover")
 
 
+
+def _clip_tag(c: dict) -> str:
+    if c.get("tag"):
+        return str(c["tag"]).upper()
+    hook = str(c.get("hook") or "").upper()
+    title = str(c.get("title") or "").upper()
+    score = c.get("score") or 85
+    if score >= 95 or "HOOK" in hook or "REACTION" in hook:
+        return "VIRAL HOOK"
+    if "CHASE" in hook or "MISSION" in title or "ESCAPE" in hook or "ACTION" in title:
+        return "ACTION CLIMAX"
+    if "WAIT" in hook or "HILARIOUS" in title or "FUNNY" in hook or "MOMENT" in hook:
+        return "FUNNY MOMENT"
+    if "INSANE" in hook or "PRO" in title or "BEST" in title:
+        return "PRO PLAY"
+    if c.get("category") == "reaction":
+        return "LOUD REACTION"
+    if c.get("category") == "funny":
+        return "FUNNY MOMENT"
+    return "HOT MOMENT"
+
+
+def _caption_style_name(style: str) -> str:
+    return {
+        "mrbeast": "MrBeast Bold",
+        "hormozi": "Hormozi Pop",
+        "neon_green": "Neon Green",
+        "clean": "Clean Minimal",
+        "bounce": "Bounce Cyan",
+        "hype": "Hype Red"
+    }.get(str(style or "").lower(), "MrBeast Bold")
+
 def public(job) -> dict:
     """What the browser may see: no server paths, no owner id."""
     out = {k: v for k, v in job.items() if k not in HIDDEN}
-    out["source"] = {k: v for k, v in job["source"].items() if k != "path"}
-    out["clips"] = [{k: v for k, v in c.items() if k not in ("src", "fixed_words", "fixed_for")} for c in job["clips"]]
+    out["source"] = {k: v for k, v in job.get("source", {}).items() if k != "path"}
+    clips_out = []
+    for c in job.get("clips", []):
+        cp = {k: v for k, v in c.items() if k not in ("src", "fixed_words", "fixed_for")}
+        base_score = int(cp.get("score") or 85)
+        has_hook = bool(cp.get("hook"))
+        has_face = bool(cp.get("facecam"))
+        vscore = cp.get("virality_score")
+        if not vscore:
+            vscore = min(99, max(65, base_score + (5 if has_hook else 0) + (4 if has_face else 0)))
+        cp["virality_score"] = int(vscore)
+        cp["tag"] = _clip_tag(cp)
+        cp.setdefault("ratio", "9:16 Vertical HD")
+        cp.setdefault("captions", _caption_style_name(cp.get("style")))
+        if cp.get("file"):
+            cp.setdefault("videoUrl", f"/media/{job['id']}/{cp['file']}")
+        if cp.get("cover"):
+            cp.setdefault("thumbnailUrl", f"/media/{job['id']}/{cp['cover']}")
+        clips_out.append(cp)
+    out["clips"] = clips_out
     ai = job.get("ai") or {}
     out["ai"] = {"tokens": ai.get("tokens", 0), "note": ai.get("note", ""), "used": bool(ai.get("model"))}   # never the model, never raw errors
     if job.get("status") == "queued":
@@ -234,6 +284,7 @@ def _load_file(f: Path, uid: str):
     except Exception:  # noqa: BLE001
         return
     job.update(dir=str(f.parent), user=uid)
+    job.setdefault("created", f.stat().st_mtime if f.exists() else time.time())
     job.setdefault("kind", "video")
     job.setdefault("creator", None)
     job.setdefault("options", {}).setdefault("captions", True)
